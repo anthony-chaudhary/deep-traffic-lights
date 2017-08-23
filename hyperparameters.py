@@ -1,8 +1,9 @@
-
+import os
 
 
 DEFAULT_BOXES = ((-0.5, -0.5, 0.5, 0.5), (0.2, 0.2, -0.2, -0.2), (-0.8, -0.2, 0.8, 0.2), (-0.2, -0.8, 0.2, 0.8))
-FEATURE_MAP_SIZES = [[31, 48], [15, 23], [8, 12], [4, 6]]
+FEATURE_MAP_SIZES = [[38, 38], [19, 19], [19, 19], [10, 10], [5, 5]]
+# 38 for VGG, then rest for SSD layers
 
 NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
 NUMBER_CLASSES = 9
@@ -13,13 +14,15 @@ NUMBER_LOCATIONS = NUMBER_DEFAULT_BOXES * 4
 #TRAINING
 LEARNING_RATE = 1e-4
 EPOCHS = 1
-BATCH_SIZE = 8
-KEEP_PROB = .50
+BATCH_SIZE = 2
+KEEP_PROB = 1.
 NEGATIVE_OVER_POSITIVE = 5
 
 #Data prep
 IOU_THRESHOLD = .9
+INPUT_YAML = "data/dataset_train_rgb/train.yaml"
 
+data_dir = './data'
 VGG_PATH = os.path.join(data_dir, 'vgg')
-IMAGE_WIDTH = 1280
-IMAGE_HEIGHT = 720
+IMAGE_WIDTH = 300
+IMAGE_HEIGHT = 300

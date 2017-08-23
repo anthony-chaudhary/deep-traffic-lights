@@ -73,8 +73,8 @@ def create_boxes(image_dict):
     for f in FEATURE_MAP_SIZES:
         true_length += f[0] * f[1] * NUMBER_DEFAULT_BOXES
 
-    true_prediction = np.zeroes(true_length)
-    true_location = np.zeroes(true_length * 4)
+    true_prediction = np.zeros(true_length)
+    true_location = np.zeros(true_length * 4)
 
     default_box_matches_counter = 0
 
@@ -89,8 +89,8 @@ def create_boxes(image_dict):
                         a = np.array([
                             max(0, col + x1_offset),
                             max(0, row + y1_offset),
-							min(fm_w, col+1 + x2_offset),
-							min(fm_h, row+1 + y2_offset) ])
+							min(f[1], col+1 + x2_offset),
+							min(f[0], row+1 + y2_offset) ])
                         scale = np.array([f[0], f[1], f[0], f[1]])
                         default_coordinates = a / scale
 
