@@ -4,35 +4,31 @@ import tensorflow as tf
 from model import ssd_layers, loss, load_vgg, optimizer 
 from hyperparameters import *
 import yaml
+from data_input_output import create_boxes
 
 def get_batch_function():
-    # TODO
-
-    input_yaml     = "data/dataset_train_rgb/train.yaml"
+  
+    input_yaml = "data/dataset_train_rgb/train.yaml"
     images_list_dict = yaml.load(open(input_yaml, 'rb').read())
     for i in range(len(image_dict)):
         images_list_dict[i] = os.path.abspath(os.path.join(os.path.dirname(input_yaml), images_list_dict[i]['path']))
     
-    #images_list_dict
-    #images_list_dict['boxes']
-
     random.shuffle(images_list_dict)
     for batch_i in range(0, len(images_list_dict), batch_size):
             
-        images = []
-        true_predictions = []
-        true_locations = []
-
-            
+        Images, True_predictions, True_locations, Prediction_loss_masks = [], [], [], []
+                    
         for i in range(len(images_list_dict[batch_i:batch_i+batch_size])):
 
-            image = scipy.misc.imread(images_list_dict[i])
-            true_predictions = image[i]['boxes']
-
+            Images = scipy.misc.imread(images_list_dict[i])
             images.append(image)
-            true_predictions.append(gt_image)
 
-        yield np.array(images), np.array(gt_images)
+            true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
+            True_predictions.append(true_prediction)
+            True_locations.append(true_location)
+            Prediction_loss_masks.append(prediction_loss_mask)
+
+        yield np.array(Images), np.array(True_predictions), np.array(True_locations), np.array(Prediction_loss_masks)
 
 
 def run():

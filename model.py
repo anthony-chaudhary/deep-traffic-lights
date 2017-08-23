@@ -1,7 +1,7 @@
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-import hyperparameters import *
+from hyperparameters import *
 
 
 def load_vgg(sess, vgg_path):
@@ -63,9 +63,8 @@ def ssd_layers(conv4_3, number_of_classes):
 def loss(predictions_all, predictions_locations_all):
 
     number_total_predictions = 0
-
-    Feature_map_sizes = [[31, 48], [15, 23], [8, 12], [4, 6]]
-    for f in Feature_map_sizes:
+    
+    for f in FEATURE_MAP_SIZES:
         number_total_predictions += f[0] * f[1] * NUMBER_DEFAULT_BOXES
     
     number_total_locations = number_total_predictions * 4
