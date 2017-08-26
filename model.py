@@ -28,6 +28,7 @@ def prediction_and_location(net, layer_id, Predictions, Locations):
         location = slim.conv2d(net, NUMBER_LOCATIONS, [3,3], 
                                activation_fn=None, scope='location')
         location = tf.contrib.layers.flatten(location)
+        print(location)
 
     Predictions.append(prediction)
     Locations.append(location)
@@ -40,6 +41,8 @@ def ssd_layers(conv4_3, number_of_classes):
     Predictions, Locations = [], []
 
     with slim.arg_scope([slim.conv2d]):
+
+        Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
 
         net = slim.conv2d(conv4_3, 1024, [3,3], scope='ssd_0')
         net = slim.conv2d(net, 1024, [1,1], scope='ssd_1')

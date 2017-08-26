@@ -23,7 +23,6 @@ else:
 
 def get_batch_function():
   
-
     images_list_dict = yaml.load(open(INPUT_YAML, 'rb').read())
     for i in range(len(images_list_dict)):
         images_list_dict[i]['path'] = os.path.abspath(os.path.join(os.path.dirname(INPUT_YAML), images_list_dict[i]['path']))
@@ -37,16 +36,21 @@ def get_batch_function():
 
             image = scipy.misc.imread(images_list_dict[i]['path'])
             image = scipy.misc.imresize(image, [IMAGE_WIDTH, IMAGE_HEIGHT])
+            print(image.shape)
             if image is None:
                 raise IOError("Could not open", images_list_dict[i]['path']) 
             Images.append(image)
 
             true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
+            
+            print("len true_prediction", len(true_prediction))
+            print("len true_location", len(true_location))
+
             True_predictions.append(true_prediction)
             True_locations.append(true_location)
             Prediction_loss_masks.append(prediction_loss_mask)
         
-        #print(len(True_locations))
+       
         yield np.array(Images), np.array(True_predictions), np.array(True_locations), np.array(Prediction_loss_masks)
 
 
