@@ -43,8 +43,10 @@ def get_batch_function():
 
             true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
             
-            print("len true_prediction", len(true_prediction))
-            print("len true_location", len(true_location))
+            #TODO if default_box_matches_counter <= 0, get new images
+
+            print("true_prediction\t", true_prediction.shape)
+            print("true_location\t", true_location.shape)
 
             True_predictions.append(true_prediction)
             True_locations.append(true_location)
@@ -56,7 +58,11 @@ def get_batch_function():
 
 def run():
 
+
+
     with tf.Session() as sess:
+
+        train_writer = tf.summary.FileWriter('./tensorboard', sess.graph)
 
         input_images, conv4_3, keep_prob = load_vgg(sess, VGG_PATH)
         predictions_all, predictions_locations_all = ssd_layers(input_images, conv4_3)
@@ -72,12 +78,17 @@ def run():
             for images_generated, true_predictions_generated, true_locations_generated, prediction_loss_mask_generated in get_batch_function():
 
                 # Forward pass
-                _, loss = sess.run([adam, loss_result], feed_dict = {
+
+                merge = tf.summary.merge_all()
+
+                summary, _, loss = sess.run([merge, adam, loss_result], feed_dict = {
                     input_images: images_generated,
                     true_predictions: true_predictions_generated, 
                     true_locations: true_locations_generated,
                     prediction_loss_mask: prediction_loss_mask_generated,
                     keep_prob: KEEP_PROB})
+
+                train_writer.add_summary(summary, index)
 
                 if index % 5 == 0:
                     print("Epoch", i)

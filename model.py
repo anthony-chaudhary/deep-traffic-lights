@@ -21,14 +21,14 @@ def load_vgg(sess, vgg_path):
 def prediction_and_location(net, layer_id, Predictions, Locations):
 
     with tf.variable_scope('prediction_and_location'+layer_id):
-        prediction = slim.conv2d(net, NUMBER_PREDICTIONS, [3,3], 
+        prediction = slim.conv2d(net, NUMBER_PREDICTIONS_PER_FEATURE_MAP, [3,3], 
                                  activation_fn=None, scope='prediction')
         prediction = tf.contrib.layers.flatten(prediction)
 
-        location = slim.conv2d(net, NUMBER_LOCATIONS, [3,3], 
+        
+        location = slim.conv2d(net, NUMBER_LOCATIONS_PER_FEATURE_MAP, [3,3], 
                                activation_fn=None, scope='location')
         location = tf.contrib.layers.flatten(location)
-        print(location)
 
     Predictions.append(prediction)
     Locations.append(location)
@@ -40,9 +40,11 @@ def ssd_layers(conv4_3, number_of_classes):
 
     Predictions, Locations = [], []
 
-    with slim.arg_scope([slim.conv2d]):
+    with slim.arg_scope([slim.conv2d], normalizer_fn=slim.batch_norm, 
+                        weights_regularizer=slim.l2_regularizer(1e-2) ):
 
-        Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
+
+        #Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
 
         net = slim.conv2d(conv4_3, 1024, [3,3], scope='ssd_0')
         net = slim.conv2d(net, 1024, [1,1], scope='ssd_1')
@@ -67,20 +69,18 @@ def ssd_layers(conv4_3, number_of_classes):
 
 def loss_function(predictions_all, predictions_locations_all):
 
-    feature_map_number = 0
+
     
-    for f in FEATURE_MAP_SIZES:
-        feature_map_number += f[0] * f[1] * NUMBER_DEFAULT_BOXES
+    print("feature_map_number ", feature_map_number)
     
-    number_total_locations = feature_map_number * 4
-    #number_total_predictions = feature_map_number * NUMBER_CLASSES
- 
-    true_predictions = tf.placeholder(tf.int32, [None, feature_map_number], name="true_predictions")
-    true_locations = tf.placeholder(tf.float32, [None, number_total_locations], name="true_locations")
-    prediction_loss_mask = tf.placeholder(tf.float32, [None, feature_map_number], name="prediction_mask")
+    true_predictions = tf.placeholder(tf.int32, [None, NUMBER_PREDICTIONS_GROUND_TRUTH], name="true_predictions")
+    true_locations = tf.placeholder(tf.float32, [None, NUMBER_LOCATIONS], name="true_locations")
+    prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS_GROUND_TRUTH], name="prediction_mask")
 
     scores = tf.reshape(predictions_all, [-1, feature_map_number, NUMBER_CLASSES])
     
+    tf.summary.histogram("logits", scores)
+
     prediction_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=scores, labels=true_predictions)
     prediction_loss *= prediction_loss_mask
     prediction_loss = tf.reduce_sum(prediction_loss)
@@ -92,10 +92,12 @@ def loss_function(predictions_all, predictions_locations_all):
     smooth_l1 = tf.less(tf.abs(location_difference), 1.0)
     location_loss = tf.where(smooth_l1, location_loss_l2, location_loss_l1)
 
+    print("location_loss")
+
     location_loss_mask = tf.minimum(true_predictions, 1)
     location_loss_mask = tf.to_float(location_loss_mask)
     location_loss_mask = tf.stack([location_loss_mask] * 4, axis=2)
-    location_loss_mask = tf.reshape(location_loss_mask, [-1, number_total_locations])
+    location_loss_mask = tf.reshape(location_loss_mask, [-1, NUMBER_LOCATIONS])
     
     location_loss *= location_loss_mask
 

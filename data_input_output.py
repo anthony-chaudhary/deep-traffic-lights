@@ -34,7 +34,7 @@ def create_prediction_loss_mask(true_prediction):
     number_negative = NEGATIVE_OVER_POSITIVE * number_positive
     true_prediction_size = np.sum(true_prediction.shape)
     print(number_negative, number_negative, true_prediction_size)
-    print(true_prediction.shape)
+    #print(true_prediction.shape)
 
     if number_positive + number_negative < true_prediction_size:
 
@@ -43,14 +43,15 @@ def create_prediction_loss_mask(true_prediction):
 
         zero_indices = np.where(prediction_loss_mask == 0.)
         zero_indices = np.transpose(zero_indices)
+        # not needed as we are processing images individually?
 
         choosen_zero_indices = zero_indices[np.random.choice(zero_indices.shape[0], int(number_negative), False)]
 
-        print(prediction_loss_mask.shape)
+        #print(prediction_loss_mask.shape)
 
         for z in choosen_zero_indices:
-            i, j = z
-            prediction_loss_mask[i][j] = 1.
+            i = z
+            prediction_loss_mask[i] = 1.
 
     else:
         prediction_loss_mask = np.ones_like(true_prediction)
@@ -76,12 +77,9 @@ def create_boxes(image_dict):
 
     print(len(relative_coordinates))
     # Init
-    true_length = 0
-    for f in FEATURE_MAP_SIZES:
-        true_length += f[0] * f[1] * NUMBER_DEFAULT_BOXES
-
-    true_prediction = np.zeros(true_length)
-    true_location = np.zeros(true_length * 4)
+   
+    true_prediction = np.zeros(NUMBER_PREDICTIONS_GROUND_TRUTH)
+    true_location = np.zeros(NUMBER_LOCATIONS)
 
     default_box_matches_counter = 0
 
@@ -112,9 +110,9 @@ def create_boxes(image_dict):
 
                         if iou >= IOU_THRESHOLD:
 
-                            print(f, d)
-                            print(default_coordinates, gt_coordinates)
-                            print(iou)
+                            #print(f, d)
+                            #print(default_coordinates, gt_coordinates)
+                            #print(iou)
 
                             true_prediction[prediction_index] = classes[i]
                             
