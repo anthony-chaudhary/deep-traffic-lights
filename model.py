@@ -22,12 +22,12 @@ def prediction_and_location(net, layer_id, Predictions, Locations):
 
     with tf.variable_scope('prediction_and_location'+layer_id):
         prediction = slim.conv2d(net, NUMBER_PREDICTIONS_PER_FEATURE_MAP, [3,3], 
-                                 activation_fn=None, scope='prediction')
+                                 activation_fn=None, scope='prediction', padding='SAME')
         prediction = tf.contrib.layers.flatten(prediction)
 
         
         location = slim.conv2d(net, NUMBER_LOCATIONS_PER_FEATURE_MAP, [3,3], 
-                               activation_fn=None, scope='location')
+                               activation_fn=None, scope='location', padding='SAME')
         location = tf.contrib.layers.flatten(location)
 
     Predictions.append(prediction)
@@ -41,10 +41,10 @@ def ssd_layers(conv4_3, number_of_classes):
     Predictions, Locations = [], []
 
     with slim.arg_scope([slim.conv2d], normalizer_fn=slim.batch_norm, 
-                        weights_regularizer=slim.l2_regularizer(1e-2) ):
+                        weights_regularizer=slim.l2_regularizer(1e-2), padding='SAME' ):
 
 
-        #Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
+        Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
 
         net = slim.conv2d(conv4_3, 1024, [3,3], scope='ssd_0')
         net = slim.conv2d(net, 1024, [1,1], scope='ssd_1')
@@ -77,7 +77,8 @@ def loss_function(predictions_all, predictions_locations_all):
     true_locations = tf.placeholder(tf.float32, [None, NUMBER_LOCATIONS], name="true_locations")
     prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS_GROUND_TRUTH], name="prediction_mask")
 
-    scores = tf.reshape(predictions_all, [-1, feature_map_number, NUMBER_CLASSES])
+
+    scores = tf.reshape(predictions_all, [-1, NUMBER_PREDICTIONS_GROUND_TRUTH, NUMBER_CLASSES])
     
     tf.summary.histogram("logits", scores)
 
@@ -85,15 +86,12 @@ def loss_function(predictions_all, predictions_locations_all):
     prediction_loss *= prediction_loss_mask
     prediction_loss = tf.reduce_sum(prediction_loss)
 
+   
     location_difference = true_locations - predictions_locations_all
-
     location_loss_l2 = .5 * (pow(location_difference, 2))
     location_loss_l1 = tf.abs(location_difference) - .5
     smooth_l1 = tf.less(tf.abs(location_difference), 1.0)
     location_loss = tf.where(smooth_l1, location_loss_l2, location_loss_l1)
-
-    print("location_loss")
-
     location_loss_mask = tf.minimum(true_predictions, 1)
     location_loss_mask = tf.to_float(location_loss_mask)
     location_loss_mask = tf.stack([location_loss_mask] * 4, axis=2)
@@ -102,13 +100,14 @@ def loss_function(predictions_all, predictions_locations_all):
     location_loss *= location_loss_mask
 
     loss = prediction_loss + location_loss + tf.reduce_sum(tf.losses.get_regularization_losses())
-
+    
     all_probabilities = tf.nn.softmax(scores)
     top_k_probabilities, top_k_prediction_probabilities = tf.nn.top_k(all_probabilities)
     top_k_probabilities = tf.reshape(top_k_probabilities, [-1, feature_map_number])
     top_k_prediction_probabilities = tf.reshape(top_k_prediction_probabilities, [-1, feature_map_number])
+    
 
-    return loss, scores, true_predictions, true_locations, prediction_loss_mask
+    return loss, true_predictions, true_locations, prediction_loss_mask
 
 
 
