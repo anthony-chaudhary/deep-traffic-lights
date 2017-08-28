@@ -73,12 +73,12 @@ def loss_function(predictions_all, predictions_locations_all):
     
     print("feature_map_number ", feature_map_number)
     
-    true_predictions = tf.placeholder(tf.int32, [None, NUMBER_PREDICTIONS_GROUND_TRUTH], name="true_predictions")
+    true_predictions = tf.placeholder(tf.int32, [None, NUMBER_PREDICTIONS], name="true_predictions")
     true_locations = tf.placeholder(tf.float32, [None, NUMBER_LOCATIONS], name="true_locations")
-    prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS_GROUND_TRUTH], name="prediction_mask")
+    prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS], name="prediction_mask")
 
 
-    scores = tf.reshape(predictions_all, [-1, NUMBER_PREDICTIONS_GROUND_TRUTH, NUMBER_CLASSES])
+    scores = tf.reshape(predictions_all, [-1, NUMBER_PREDICTIONS, NUMBER_CLASSES])
     
     tf.summary.histogram("logits", scores)
 
@@ -86,8 +86,10 @@ def loss_function(predictions_all, predictions_locations_all):
     prediction_loss *= prediction_loss_mask
     prediction_loss = tf.reduce_sum(prediction_loss)
 
-   
+    #predictions_locations_all = tf.reshape(predictions_locations_all, [-1, 4, NUMBER_CHANNELS])
+    
     location_difference = true_locations - predictions_locations_all
+
     location_loss_l2 = .5 * (pow(location_difference, 2))
     location_loss_l1 = tf.abs(location_difference) - .5
     smooth_l1 = tf.less(tf.abs(location_difference), 1.0)

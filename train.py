@@ -66,7 +66,7 @@ def run():
 
         input_images, conv4_3, keep_prob = load_vgg(sess, VGG_PATH)
         predictions_all, predictions_locations_all = ssd_layers(input_images, conv4_3)
-        loss_result, logits, true_predictions, true_locations, \
+        loss_result, true_predictions, true_locations, \
             prediction_loss_mask = loss_function(predictions_all, predictions_locations_all)
         
         adam = optimizer(loss_result)

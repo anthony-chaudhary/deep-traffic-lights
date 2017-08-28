@@ -78,7 +78,7 @@ def create_boxes(image_dict):
     print(len(relative_coordinates))
     # Init
    
-    true_prediction = np.zeros(NUMBER_PREDICTIONS_GROUND_TRUTH)
+    true_prediction = np.zeros(NUMBER_PREDICTIONS)
     true_location = np.zeros(NUMBER_LOCATIONS)
 
     default_box_matches_counter = 0
