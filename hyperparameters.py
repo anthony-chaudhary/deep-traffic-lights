@@ -2,7 +2,8 @@ import os
 
 
 DEFAULT_BOXES = ((-0.5, -0.8, 0.4, 0.5), (0.1, -0.1, -0.1, 0.1), (-0.05, -0.1, 0.05, 0.05), (-0.2, -0.8, 0.2, 0.2))
-FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
+#FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
+FEATURE_MAP_SIZES = [[5, 5]]
 # 38 for VGG, then rest for SSD layers
 
 NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
@@ -13,18 +14,14 @@ feature_map_number = 0
 for f in FEATURE_MAP_SIZES:
     feature_map_number += (f[0] * f[1])
 
-NUMBER_PREDICTIONS = NUMBER_DEFAULT_BOXES * feature_map_number
-NUMBER_PREDICTIONS_PER_FEATURE_MAP = NUMBER_CLASSES
+NUMBER_PREDICTIONS = NUMBER_CLASSES * NUMBER_DEFAULT_BOXES * feature_map_number
 
 NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
-NUMBER_LOCATIONS_PER_FEATURE_MAP = 4
 
 
 print("feature_map_number\t", feature_map_number)
 print("NUMBER_PREDICTIONS\t", NUMBER_PREDICTIONS)
 print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
-print("NUMBER_PREDICTIONS_PER_FEATURE_MAP\t", NUMBER_PREDICTIONS_PER_FEATURE_MAP)
-print("NUMBER_LOCATIONS_PER_FEATURE_MAP\t", NUMBER_LOCATIONS_PER_FEATURE_MAP)
 
 #TRAINING
 LEARNING_RATE = 1e-4
@@ -53,5 +50,6 @@ LABEL_DICT =  {
     "RedLeft" : 5,
     "RedRight" : 6,
     "Yellow" : 7,
-    "off" : 8
+    "off" : 8,
+    "RedStraight" : 2
     }
