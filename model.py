@@ -75,20 +75,16 @@ def ssd_layers(conv4_3, number_of_classes):
         net = slim.conv2d(net, 256, [1,1], scope='ssd_2')
         net = slim.conv2d(net, 512, [3,3], 2, scope='ssd_2_s2')
         
-        Predictions, Locations = prediction_and_location(net, 'ssd_2_s2', Predictions, Locations)
-
-        print(tf.shape(net))
+        #Predictions, Locations = prediction_and_location(net, 'ssd_2_s2', Predictions, Locations)
 
         net = slim.conv2d(net, 128, [1,1], scope='ssd_3')
         net = slim.conv2d(net, 256, [3,3], 2, scope='ssd_3_s2')
 
-        print(tf.shape(net))
-        
         Predictions, Locations = prediction_and_location(net, 'ssd_3_s2', Predictions, Locations)
         
 
-    predictions_all = tf.concat(Predictions, 1)
-    predictions_locations_all = tf.concat(Locations, 1)
+    predictions_all = tf.concat(Predictions, 1, name="predictions_all")
+    predictions_locations_all = tf.concat(Locations, 1, name="predictions_locations_all")
 
     return Predictions, Locations
 
@@ -108,16 +104,14 @@ def loss_function(predictions_all, predictions_locations_all):
     resized_pred_predictions = []
     resized_true_locations = []
     resized_pred_locations = []
-    resized_prediction_loss_mask = []
+    resized_prediction_loss_mask = tf.reshape(prediction_loss_mask, [-1], name="resized_prediction_loss_mask")
 
     for i in range(len(predictions_all)):
-        resized_pred_predictions.append(tf.reshape(predictions_all[i], [-1, NUMBER_CLASSES]))
-        resized_true_predictions.append(tf.reshape(true_predictions[i], [-1]))
-        resized_prediction_loss_mask.append(tf.reshape(prediction_loss_mask[i], [-1]))
+        resized_pred_predictions.append(tf.reshape(predictions_all[i], [-1, NUMBER_CLASSES], name="resized_pred_predictions"))
+        resized_true_predictions.append(tf.reshape(true_predictions[i], [-1], name="resized_true_predictions"))
         resized_pred_locations.append(tf.reshape(predictions_locations_all[i], [-1, 4]))
         resized_true_locations.append(tf.reshape(true_locations[i], [-1, 4]))
 
-    resized_prediction_loss_mask = tf.concat(resized_prediction_loss_mask, axis=0)
     resized_true_predictions = tf.concat(resized_true_predictions, axis=0)
     resized_pred_predictions = tf.concat(resized_pred_predictions, axis=0)
     resized_true_locations = tf.concat(resized_true_locations, axis=0)
@@ -135,7 +129,6 @@ def loss_function(predictions_all, predictions_locations_all):
     smooth_l1 = tf.less(tf.abs(location_difference), 1.0)
     location_loss = tf.where(smooth_l1, location_loss_l2, location_loss_l1)
     
-
     location_loss_mask = tf.minimum(true_predictions, 1)
     location_loss_mask = tf.to_float(location_loss_mask)
     location_loss_mask = tf.stack([location_loss_mask] * 4, axis=2)
