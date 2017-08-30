@@ -75,7 +75,7 @@ def ssd_layers(conv4_3, number_of_classes):
         net = slim.conv2d(net, 256, [1,1], scope='ssd_2')
         net = slim.conv2d(net, 512, [3,3], 2, scope='ssd_2_s2')
         
-        #Predictions, Locations = prediction_and_location(net, 'ssd_2_s2', Predictions, Locations)
+        Predictions, Locations = prediction_and_location(net, 'ssd_2_s2', Predictions, Locations)
 
         print(tf.shape(net))
 
@@ -103,18 +103,21 @@ def loss_function(predictions_all, predictions_locations_all):
     true_locations = tf.placeholder(tf.float32, [None, NUMBER_LOCATIONS], name="true_locations")
     prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS], name="prediction_mask")
 
-
+    # idea from tensorflow SSD on github
     resized_true_predictions = []
     resized_pred_predictions = []
     resized_true_locations = []
     resized_pred_locations = []
+    resized_prediction_loss_mask = []
 
     for i in range(len(predictions_all)):
         resized_pred_predictions.append(tf.reshape(predictions_all[i], [-1, NUMBER_CLASSES]))
         resized_true_predictions.append(tf.reshape(true_predictions[i], [-1]))
+        resized_prediction_loss_mask.append(tf.reshape(prediction_loss_mask[i], [-1]))
         resized_pred_locations.append(tf.reshape(predictions_locations_all[i], [-1, 4]))
         resized_true_locations.append(tf.reshape(true_locations[i], [-1, 4]))
 
+    resized_prediction_loss_mask = tf.concat(resized_prediction_loss_mask, axis=0)
     resized_true_predictions = tf.concat(resized_true_predictions, axis=0)
     resized_pred_predictions = tf.concat(resized_pred_predictions, axis=0)
     resized_true_locations = tf.concat(resized_true_locations, axis=0)
@@ -122,7 +125,7 @@ def loss_function(predictions_all, predictions_locations_all):
     tf.summary.histogram("logits", resized_pred_predictions)
 
     prediction_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=resized_pred_predictions, labels=resized_true_predictions)
-    prediction_loss *= prediction_loss_mask
+    prediction_loss *= resized_prediction_loss_mask
     prediction_loss = tf.reduce_sum(prediction_loss)
 
     location_difference = resized_true_locations - resized_pred_locations
