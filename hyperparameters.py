@@ -26,12 +26,12 @@ print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
 #TRAINING
 LEARNING_RATE = 1e-4
 EPOCHS = 1
-BATCH_SIZE = 1
+BATCH_SIZE = 2
 KEEP_PROB = 1.
 NEGATIVE_OVER_POSITIVE = 3
 
 #Data prep
-IOU_THRESHOLD = .1  # Goal to be .5 as per paper
+IOU_THRESHOLD = .01  # Goal to be .5 as per paper
 
 INPUT_YAML = "data/dataset_train_rgb/train.yaml"
 
