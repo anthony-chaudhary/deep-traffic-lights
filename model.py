@@ -123,31 +123,30 @@ def loss_function(predictions_all, predictions_locations_all):
     
     true_predictions = tf.placeholder(tf.int32, [BATCH_SIZE, NUMBER_PREDICTIONS], name="true_predictions")
     true_locations = tf.placeholder(tf.float32, [BATCH_SIZE, NUMBER_LOCATIONS], name="true_locations")
-    prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS], name="prediction_mask")
+    prediction_loss_mask = tf.placeholder(tf.float32, [BATCH_SIZE, NUMBER_PREDICTIONS], name="prediction_mask")
 
     # idea from tensorflow SSD on github
     resized_true_predictions = []
     resized_pred_predictions = []
     resized_true_locations = []
     resized_pred_locations = []
-    resized_prediction_loss_mask = tf.reshape(prediction_loss_mask, [-1], name="resized_prediction_loss_mask")
+    #resized_prediction_loss_mask = tf.reshape(prediction_loss_mask, [-1, NUMBER_PREDICTIONS], name="resized_prediction_loss_mask")
 
     for i in range(len(predictions_all)):
-        resized_pred_predictions.append(tf.reshape(predictions_all[i], [-1, NUMBER_PREDICTIONS, NUMBER_CLASSES], name="resized_pred_predictions"))
-        #resized_true_predictions.append(tf.reshape(true_predictions, [-1, BATCH_SIZE], name="resized_true_predictions"))
+        resized_pred_predictions.append(tf.reshape(predictions_all[i], [-1, NUMBER_CLASSES], name="resized_pred_predictions"))
         resized_pred_locations.append(tf.reshape(predictions_locations_all[i], [-1]))
     
     c_true_locations = true_locations
     c_pred_predictions = tf.concat(resized_pred_predictions, axis=0)
     c_pred_locations = tf.concat(resized_pred_locations, axis=0)
+    true_predictions = tf.reshape(true_predictions, [-1])
+    prediction_loss_mask = tf.reshape(prediction_loss_mask, [-1])
 
-    #stacked_predictions = tf.stack(resized_true_predictions, axis=0)
-    c_true_predictions = true_predictions #tf.flatten(true_predictions, [-1])
-    #c_true_locations = tf.concat(resized_true_locations, axis=0)
+    c_true_predictions = true_predictions 
     tf.summary.histogram("logits", c_pred_predictions)
 
     prediction_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=c_pred_predictions, labels=true_predictions)
-    prediction_loss *= resized_prediction_loss_mask
+    prediction_loss *= prediction_loss_mask
     prediction_loss = tf.reduce_sum(prediction_loss)
 
     location_difference = c_pred_locations - c_true_locations
@@ -157,12 +156,12 @@ def loss_function(predictions_all, predictions_locations_all):
     smooth_l1 = tf.less(tf.abs(location_difference), 1.0)
     location_loss = tf.where(smooth_l1, location_loss_l2, location_loss_l1)
     
-    
-    location_loss_mask = tf.minimum(true_predictions, 1)
-    location_loss_mask = tf.to_float(location_loss_mask)
-    location_loss_mask = tf.stack([location_loss_mask]*4, axis=2)
-    location_loss_mask = tf.reshape(location_loss_mask, [-1, NUMBER_LOCATIONS])
-    location_loss *= location_loss_mask
+    #location_loss_mask = tf.minimum(true_predictions, 1)
+    #location_loss_mask = tf.to_float(location_loss_mask)
+    #location_loss_mask = tf.stack([location_loss_mask]*4, axis=2)
+    #location_loss_mask = tf.reshape(location_loss_mask, [-1, NUMBER_LOCATIONS])
+    #location_loss *= location_loss_mask
+
     location_loss = tf.reduce_sum(location_loss)
 
     loss = prediction_loss + location_loss + tf.reduce_sum(tf.losses.get_regularization_losses())
