@@ -102,7 +102,7 @@ def ssd_layers(conv4_3, number_of_classes):
         net = slim.conv2d(net, 256, [1,1], scope='ssd_2')
         net = slim.conv2d(net, 512, [3,3], 2, scope='ssd_2_s2')
         
-        Predictions, Locations = prediction_and_location(net, 'ssd_2_s2', Predictions, Locations)
+        #Predictions, Locations = prediction_and_location(net, 'ssd_2_s2', Predictions, Locations)
 
         net = slim.conv2d(net, 128, [1,1], scope='ssd_3')
         net = slim.conv2d(net, 256, [3,3], 2, scope='ssd_3_s2')
@@ -124,11 +124,12 @@ def loss_function(predictions_all, predictions_locations_all):
 
     print("feature_map_number ", feature_map_number)
     
-    true_predictions = tf.placeholder(tf.int32, [None, NUMBER_PREDICTIONS], name="true_predictions")
-    true_locations = tf.placeholder(tf.float32, [BATCH_SIZE, NUMBER_LOCATIONS], name="true_locations")
-    prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS], name="prediction_mask")
+    true_predictions = tf.placeholder(tf.int32, [BATCH_SIZE*NUMBER_PREDICTIONS], name="true_predictions")
+    true_locations = tf.placeholder(tf.float32, [BATCH_SIZE *NUMBER_LOCATIONS], name="true_locations")
+    prediction_loss_mask = tf.placeholder(tf.float32, [BATCH_SIZE * NUMBER_PREDICTIONS], name="prediction_mask")
 
     print("len prediction all", len(predictions_all))
+    print(true_predictions)
 
     # idea from tensorflow SSD on github
     resized_true_predictions = []
@@ -140,24 +141,25 @@ def loss_function(predictions_all, predictions_locations_all):
     for i in range(len(predictions_all)):
         resized_pred_predictions.append(tf.reshape(predictions_all[i], [-1, num_classes], name="resized_pred_predictions"))
         resized_pred_locations.append(tf.reshape(predictions_locations_all[i], [-1], name="resized_pred_locations" ))
-        resized_true_predictions.append(tf.reshape(true_predictions[0], [-1], name="resized_true_predictions"))
+        #resized_true_predictions.append(tf.reshape(true_predictions[0], [-1], name="resized_true_predictions"))
         resized_prediction_loss_mask.append(tf.reshape(prediction_loss_mask[0], [-1], name="resized_prediction_loss_mask"))
-        
+        resized_true_locations.append(tf.reshape(true_locations[0], [-1], name="resized_true_locations"))
+    
     c_true_locations = true_locations
+    #c_true_locations = tf.concat(resized_true_locations, axis=0) 
     c_pred_predictions = tf.concat(resized_pred_predictions, axis=0)
     c_pred_locations = tf.concat(resized_pred_locations, axis=0)
 
     #print("resized_prediction_loss_mask shape", tensor_shape(resized_prediction_loss_mask, 2))
-
     print(resized_pred_predictions)
-
     print(resized_prediction_loss_mask)
-
     #print("resized_true_predictions shape", tensor_shape(resized_true_predictions, 2))
     print(resized_true_predictions)
 
-    c_prediction_loss_mask = tf.concat(resized_prediction_loss_mask, axis=0, name="concat_prediction_loss_mask")
-    c_true_predictions = tf.concat(resized_true_predictions, axis=0, name="concat_true_predictions") 
+    c_prediction_loss_mask = prediction_loss_mask
+    c_true_predictions = true_predictions
+    #c_prediction_loss_mask = tf.concat(resized_prediction_loss_mask, axis=0, name="concat_prediction_loss_mask")
+    #c_true_predictions = tf.concat(resized_true_predictions, axis=0, name="concat_true_predictions") 
 
     tf.summary.histogram("logits", c_pred_predictions)
 
