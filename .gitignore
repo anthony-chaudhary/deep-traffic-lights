@@ -140,3 +140,9 @@ $RECYCLE.BIN/
 
 /data
 tensorboard/events.out.tfevents.1503774000.DESKTOP-V4CJITU
+*.suo
+.vs/ProjectSettings.json
+*.sqlite
+.vs/VSWorkspaceState.json
+*.sqlite-journal
+/tensorboard

@@ -175,11 +175,10 @@ def loss_function(predictions_all, predictions_locations_all):
     smooth_l1 = tf.less(tf.abs(location_difference), 1.0)
     location_loss = tf.where(smooth_l1, location_loss_l2, location_loss_l1)
     
-    #location_loss_mask = tf.minimum(true_predictions, 1)
-    #location_loss_mask = tf.to_float(location_loss_mask)
-    #location_loss_mask = tf.stack([location_loss_mask]*4, axis=2)
-    #location_loss_mask = tf.reshape(location_loss_mask, [-1, NUMBER_LOCATIONS])
-    #location_loss *= location_loss_mask
+    location_loss_mask = tf.minimum(true_predictions, 1)
+    location_loss_mask = tf.to_float(location_loss_mask)
+    location_loss_mask = tf.stack([location_loss_mask]*4, axis=1)
+    location_loss *= location_loss_mask
 
     location_loss = tf.reduce_sum(location_loss)
 

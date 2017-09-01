@@ -10,25 +10,27 @@ NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
 NUMBER_CLASSES = 3
 NUMBER_CHANNELS = 3
 
-feature_map_number = 0
-for f in FEATURE_MAP_SIZES:
-    feature_map_number += (f[0] * f[1])
-
-NUMBER_PREDICTIONS = NUMBER_CLASSES * NUMBER_DEFAULT_BOXES * feature_map_number
-
-NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
-
-
-print("feature_map_number\t", feature_map_number)
-print("NUMBER_PREDICTIONS\t", NUMBER_PREDICTIONS)
-print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
-
 #TRAINING
 LEARNING_RATE = 1e-4
 EPOCHS = 1
 BATCH_SIZE = 2
 KEEP_PROB = 1.
 NEGATIVE_OVER_POSITIVE = 3
+
+feature_map_number = 0
+for f in FEATURE_MAP_SIZES:
+    feature_map_number += (f[0] * f[1])
+
+#NUMBER_PREDICTIONS = NUMBER_CLASSES * NUMBER_DEFAULT_BOXES * feature_map_number
+NUMBER_PREDICTIONS = int(50410 / BATCH_SIZE)
+
+#NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
+NUMBER_LOCATIONS = int(201640 / BATCH_SIZE)
+
+print("feature_map_number\t", feature_map_number)
+print("NUMBER_PREDICTIONS\t", NUMBER_PREDICTIONS)
+print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
+
 
 #Data prep
 IOU_THRESHOLD = .01  # Goal to be .5 as per paper

@@ -94,7 +94,7 @@ def run():
                 train_writer.add_summary(summary, index)
 
                 if index % 5 == 0:
-                    print("Epoch", i)
+                    print("\n\nEpoch", i)
                     print("Loss {:.5f}...".format(loss))
 
                 index += 1
