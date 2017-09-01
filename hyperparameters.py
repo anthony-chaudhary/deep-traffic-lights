@@ -1,5 +1,5 @@
 import os
-
+import yaml
 
 DEFAULT_BOXES = ((-0.5, -0.8, 0.4, 0.5), (0.1, -0.1, -0.1, 0.1), (-0.05, -0.1, 0.05, 0.05), (-0.2, -0.8, 0.2, 0.2))
 #FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
@@ -42,16 +42,22 @@ VGG_PATH = os.path.join(data_dir, 'vgg')
 IMAGE_WIDTH = 300
 IMAGE_HEIGHT = 300
 
+images_list_dict = yaml.load(open(INPUT_YAML, 'rb').read())
+for i in range(len(images_list_dict)):
+    images_list_dict[i]['path'] = os.path.abspath(os.path.join(os.path.dirname(INPUT_YAML), images_list_dict[i]['path']))
+    
+
 
 # Background_class_is : 0 
 LABEL_DICT =  {
     "Green" : 1,
     "Red" : 2,
-    "GreenLeft" : 3,
-    "GreenRight" : 4,
-    "RedLeft" : 5,
-    "RedRight" : 6,
-    "Yellow" : 7,
-    "off" : 8,
-    "RedStraight" : 2
+    "GreenLeft" : 0,
+    "GreenRight" : 0,
+    "RedLeft" : 0,
+    "RedRight" : 0,
+    "Yellow" : 0,
+    "off" : 0,
+    "RedStraight" : 2,
+    "GreenStraight" : 1
     }

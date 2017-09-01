@@ -22,42 +22,43 @@ else:
 
 
 def get_batch_function():
-  
-    images_list_dict = yaml.load(open(INPUT_YAML, 'rb').read())
-    for i in range(len(images_list_dict)):
-        images_list_dict[i]['path'] = os.path.abspath(os.path.join(os.path.dirname(INPUT_YAML), images_list_dict[i]['path']))
     
-    random.shuffle(images_list_dict)
-    for batch_i in range(0, len(images_list_dict), BATCH_SIZE):
+    def get_batches_fn():
+          # in hyper paramters
+        #print(images_list_dict)
+
+        for batch_i in range(0, len(images_list_dict), BATCH_SIZE):
             
-        Images, True_predictions, True_locations, Prediction_loss_masks = [], [], [], []
+            Images, True_predictions, True_locations, Prediction_loss_masks = [], [], [], []
                     
-        for i in range(len(images_list_dict[batch_i : batch_i+BATCH_SIZE])):
+            for i in range(len(images_list_dict[batch_i : batch_i+BATCH_SIZE])):
 
-            image = scipy.misc.imread(images_list_dict[i]['path'])
-            image = scipy.misc.imresize(image, [IMAGE_WIDTH, IMAGE_HEIGHT])
-            print(image.shape)
-            if image is None:
-                raise IOError("Could not open", images_list_dict[i]['path']) 
-            Images.append(image)
+                random.shuffle(images_list_dict)  ## rename this it's a list of dicts 
+                image = scipy.misc.imread(images_list_dict[i]['path'])
+                image = scipy.misc.imresize(image, [IMAGE_WIDTH, IMAGE_HEIGHT])
+                print(image.shape)
+                if image is None:
+                    raise IOError("Could not open", images_list_dict[i]['path']) 
+                Images.append(image)
 
-            true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
+                true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
             
-            #TODO if default_box_matches_counter <= 0, get new images
+                #TODO if default_box_matches_counter <= 0, get new images
 
-            print("true_prediction\t", true_prediction.shape)
-            print("true_location\t", true_location.shape)
+                print("true_prediction\t", true_prediction.shape)
+                print("true_location\t", true_location.shape)
 
-            True_predictions.append(true_prediction)
-            True_locations.append(true_location)
-            Prediction_loss_masks.append(prediction_loss_mask)
+                True_predictions.append(true_prediction)
+                True_locations.append(true_location)
+                Prediction_loss_masks.append(prediction_loss_mask)
         
-            True_predictions_ = np.concatenate(np.array(True_predictions))
-            Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
-            True_locations_ = np.concatenate(np.array(True_locations))
+                True_predictions_ = np.concatenate(np.array(True_predictions))
+                Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
+                True_locations_ = np.concatenate(np.array(True_locations))
 
-        yield np.array(Images), True_predictions_, True_locations_, Prediction_loss_masks_
-
+            yield np.array(Images), True_predictions_, True_locations_, Prediction_loss_masks_
+    
+    return get_batches_fn
 
 def run():
 
@@ -74,11 +75,13 @@ def run():
         
         adam = optimizer(loss_result)
 
+        get_batches_fn = get_batch_function()  # yields batches
+
         sess.run(tf.global_variables_initializer())
         index = 0
 
         for i in range(EPOCHS):
-            for images_generated, true_predictions_generated, true_locations_generated, prediction_loss_mask_generated in get_batch_function():
+            for images_generated, true_predictions_generated, true_locations_generated, prediction_loss_mask_generated in get_batches_fn():
 
                 # Forward pass
 
