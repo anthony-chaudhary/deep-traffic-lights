@@ -146,3 +146,4 @@ tensorboard/events.out.tfevents.1503774000.DESKTOP-V4CJITU
 .vs/VSWorkspaceState.json
 *.sqlite-journal
 /tensorboard
+*.DESKTOP-V4CJITU

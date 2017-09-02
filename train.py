@@ -55,7 +55,7 @@ def get_batch_function():
                 True_predictions_ = np.concatenate(np.array(True_predictions))
                 Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
                 True_locations_ = np.concatenate(np.array(True_locations))
-
+            
             yield np.array(Images), True_predictions_, True_locations_, Prediction_loss_masks_
     
     return get_batches_fn
@@ -63,13 +63,13 @@ def get_batch_function():
 def run():
 
 
-
     with tf.Session() as sess:
 
-        train_writer = tf.summary.FileWriter('./tensorboard', sess.graph)
-
+        
         input_images, conv4_3, keep_prob = load_vgg(sess, VGG_PATH)
-        predictions_all, predictions_locations_all = ssd_layers(input_images, conv4_3)
+
+        predictions_all, predictions_locations_all = ssd_layers(conv4_3)
+
         loss_result, true_predictions, true_locations, \
             prediction_loss_mask = loss_function(predictions_all, predictions_locations_all)
         
@@ -79,6 +79,9 @@ def run():
 
         sess.run(tf.global_variables_initializer())
         index = 0
+
+        train_writer = tf.summary.FileWriter('./tensorboard', sess.graph)
+        saver = tf.train.Saver()
 
         for i in range(EPOCHS):
             for images_generated, true_predictions_generated, true_locations_generated, prediction_loss_mask_generated in get_batches_fn():
@@ -102,9 +105,10 @@ def run():
 
                 index += 1
 
-         #TODO validation set
-         #TODO timing / performance
-         #TODO 
+        #TODO timing / performance
+        saver.save(sess, "checkpoints/a.ckpt")
+        print("Saved")
+
 
 if __name__ == '__main__':
 
