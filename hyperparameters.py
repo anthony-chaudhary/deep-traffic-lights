@@ -3,16 +3,17 @@ import yaml
 
 DEFAULT_BOXES = ((-0.5, -0.8, 0.4, 0.5), (0.1, -0.1, -0.1, 0.1), (-0.05, -0.1, 0.05, 0.05), (-0.2, -0.8, 0.2, 0.2))
 FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
+#FEATURE_MAP_SIZES = [[19, 19], [19, 19], [10, 10], [5, 5]]
 # 38 for VGG, then rest for SSD layers
 
 NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
-NUMBER_CLASSES = 3
+NUMBER_CLASSES = 2
 NUMBER_CHANNELS = 3
 
 #TRAINING
 LEARNING_RATE = 1e-4
 EPOCHS = 1
-BATCH_SIZE = int(2)
+BATCH_SIZE = int(1)
 KEEP_PROB = 1.
 NEGATIVE_OVER_POSITIVE = 3
 
@@ -20,9 +21,11 @@ feature_map_number = 0
 for f in FEATURE_MAP_SIZES:
     feature_map_number += (f[0] * f[1])
 
-NUMBER_PREDICTIONS = NUMBER_CLASSES * NUMBER_DEFAULT_BOXES * feature_map_number
+NUMBER_PREDICTIONS = NUMBER_DEFAULT_BOXES * feature_map_number
+#NUMBER_PREDICTIONS = int(10164/NUMBER_CLASSES)
 
 NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
+#NUMBER_LOCATIONS = int(13552)
 
 print("feature_map_number\t", feature_map_number)
 print("NUMBER_PREDICTIONS\t", NUMBER_PREDICTIONS)

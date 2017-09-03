@@ -52,11 +52,11 @@ def get_batch_function():
                 True_locations.append(true_location)
                 Prediction_loss_masks.append(prediction_loss_mask)
         
-                True_predictions_ = np.concatenate(np.array(True_predictions))
-                Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
-                True_locations_ = np.concatenate(np.array(True_locations))
+                #True_predictions_ = np.concatenate(np.array(True_predictions))
+                #Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
+                #True_locations_ = np.concatenate(np.array(True_locations))
             
-            yield np.array(Images), True_predictions_, True_locations_, Prediction_loss_masks_
+            yield np.array(Images), True_predictions, True_locations, Prediction_loss_masks
     
     return get_batches_fn
 

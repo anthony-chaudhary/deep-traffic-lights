@@ -121,7 +121,7 @@ def create_boxes(image_dict):
                             center = np.array([col + .5, row + .5])
                             absolute_gt_coordinates = gt_coordinates * scale
                             new_coordinates = absolute_gt_coordinates - np.concatenate((center, center))
-                            true_location[prediction_index*4 : prediction_index*4 + 4] = new_coordinates
+                            true_location[prediction_index : prediction_index + 4] = new_coordinates
 
                         prediction_index += 1
     

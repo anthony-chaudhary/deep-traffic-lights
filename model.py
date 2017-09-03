@@ -47,9 +47,6 @@ def get_shape(x, rank=None):
 def load_vgg(sess, vgg_path):
 
     tf.saved_model.loader.load(sess, ['vgg16'], vgg_path)
-    
-    # TODO  confirm these names are right
-    # Using instead of conv4_3
 
     images = tf.get_default_graph().get_tensor_by_name('image_input:0')
     conv4_3 = tf.get_default_graph().get_tensor_by_name('layer4_out:0')
@@ -64,23 +61,23 @@ def prediction_and_location(net, layer_id, Predictions, Locations):
         
         num_anchors = (NUMBER_DEFAULT_BOXES)
 
-        prediction = slim.conv2d(net, num_anchors*3, [3,3], 
-                                 activation_fn=None, scope='prediction', padding='VALID')
+        prediction = slim.conv2d(net, num_anchors*NUMBER_CLASSES, [3,3], 
+                                 activation_fn=None, scope='prediction', padding='SAME')
 
         
         #prediction = tf.transpose(prediction, perm=(0, 2, 3, 1))  # move channel to last
-        prediction = tf.reshape(prediction, 
-                                tensor_shape(prediction, 4)[:-1] + [num_anchors, NUMBER_CLASSES])
+        #prediction = tf.reshape(prediction, tensor_shape(prediction, 4)[:-1] + [num_anchors, NUMBER_CLASSES])
+        prediction = tf.contrib.layers.flatten(prediction)
 
-        location = slim.conv2d(net, num_anchors*4, [3,3], 
-                               activation_fn=None, scope='location', padding='VALID')
+        location = slim.conv2d(net, num_anchors*4, [3,3], activation_fn=None, scope='location')
         #location = tf.transpose(prediction, perm=(0, 2, 3, 1)) 
-        location = tf.reshape(location, tensor_shape(location, 4)[:-1] + [num_anchors, 4])
-        
-    Predictions.append(prediction)
-    Locations.append(location)
+        #location = tf.reshape(location, tensor_shape(location, 4)[:-1] + [num_anchors, 4])
+        location = tf.contrib.layers.flatten(location)
 
-    return Predictions, Locations
+        Predictions.append(prediction)
+        Locations.append(location)
+
+        return Predictions, Locations
 
 
 def ssd_layers(conv4_3):
@@ -88,7 +85,7 @@ def ssd_layers(conv4_3):
     Predictions, Locations = [], []
     with tf.variable_scope("ssd_300"):
         with slim.arg_scope([slim.conv2d], normalizer_fn=slim.batch_norm, 
-                            weights_regularizer=slim.l2_regularizer(1e-2), padding='VALID' ):
+                            weights_regularizer=slim.l2_regularizer(1e-2), padding='SAME'):
 
 
             Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
@@ -108,41 +105,27 @@ def ssd_layers(conv4_3):
 
             Predictions, Locations = prediction_and_location(net, 'ssd_3_s2', Predictions, Locations)
         
-
-        predictions_all = tf.concat(Predictions, 1, name="predictions_all")
-        predictions_locations_all = tf.concat(Locations, 1, name="predictions_locations_all")
-
-    return Predictions, Locations
+        final_Predictions = tf.concat(Predictions, 1)
+        final_Locations = tf.concat(Locations, 1)
+        
+        return final_Predictions, final_Locations
 
 
 def loss_function(predictions_all, predictions_locations_all):
 
-    lshape = get_shape(predictions_all[0], 5)
-    num_classes = lshape[-1]
-    print("loss num classes", num_classes)
+       
+    true_predictions = tf.placeholder(tf.int32, [BATCH_SIZE, NUMBER_PREDICTIONS], name="true_predictions")
+    true_locations = tf.placeholder(tf.float32, [BATCH_SIZE, NUMBER_LOCATIONS], name="true_locations")
+    prediction_loss_mask = tf.placeholder(tf.float32, [BATCH_SIZE, NUMBER_PREDICTIONS], name="prediction_mask")
 
-    print("feature_map_number ", feature_map_number)
-    
-    true_predictions = tf.placeholder(tf.int32, [BATCH_SIZE*NUMBER_PREDICTIONS], name="true_predictions")
-    true_locations = tf.placeholder(tf.float32, [BATCH_SIZE*NUMBER_LOCATIONS], name="true_locations")
-    prediction_loss_mask = tf.placeholder(tf.float32, [BATCH_SIZE*NUMBER_PREDICTIONS], name="prediction_mask")
-
-    print("len prediction all", len(predictions_all))
+    print(predictions_all)
     print(true_locations)
 
-    # idea from tensorflow SSD on github
-    resized_true_predictions = []
-    resized_pred_predictions = []
-    resized_true_locations = []
-    resized_pred_locations = []
-    resized_prediction_loss_mask = []
-
-    for i in range(len(predictions_all)):
-        resized_pred_predictions.append(tf.reshape(predictions_all[i], [-1, num_classes], name="resized_pred_predictions"))
-        resized_pred_locations.append(tf.reshape(predictions_locations_all[i], [-1], name="resized_pred_locations" ))
-    
-    c_pred_locations = tf.concat(resized_pred_locations, axis=0)
-    c_pred_predictions = tf.concat(resized_pred_predictions, axis=0)
+    # stack true locations 3 times
+    #true_predictions_stacked = tf.stack([true_predictions]*3, axis=2)
+  
+    c_pred_predictions = tf.reshape(predictions_all, [-1, NUMBER_PREDICTIONS, NUMBER_CLASSES])
+    c_pred_locations = predictions_locations_all
 
     c_true_locations = true_locations
     c_true_predictions = true_predictions
@@ -155,7 +138,7 @@ def loss_function(predictions_all, predictions_locations_all):
     prediction_loss *= c_prediction_loss_mask
     prediction_loss = tf.reduce_sum(prediction_loss)
 
-    location_difference = c_pred_locations - c_true_locations
+    location_difference = c_true_locations - c_pred_locations
     
     print(location_difference)
     print(true_predictions)
@@ -169,6 +152,7 @@ def loss_function(predictions_all, predictions_locations_all):
     location_loss_mask = tf.minimum(true_predictions, 1)
     location_loss_mask = tf.to_float(location_loss_mask)
 
+    # or could multiple by classes / boxes to normalize?
     location_loss_mask = tf.stack([location_loss_mask], axis=1)  # Stacking locations for each prediction box?
     location_loss_mask = tf.expand_dims(location_loss_mask, axis=-1)
     #location_loss_mask = tf.reshape(location_loss_mask, [-1])
