@@ -88,7 +88,7 @@ def ssd_layers(conv4_3):
                             weights_regularizer=slim.l2_regularizer(1e-2), padding='SAME'):
 
 
-            Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
+            #Predictions, Locations = prediction_and_location(conv4_3, 'vgg_0', Predictions, Locations)
 
             net = slim.conv2d(conv4_3, 1024, [3,3], scope='ssd_0')
             net = slim.conv2d(net, 1024, [1,1], scope='ssd_1')
@@ -120,9 +120,6 @@ def loss_function(predictions_all, predictions_locations_all):
 
     print(predictions_all)
     print(true_locations)
-
-    # stack true locations 3 times
-    #true_predictions_stacked = tf.stack([true_predictions]*3, axis=2)
   
     c_pred_predictions = tf.reshape(predictions_all, [-1, NUMBER_PREDICTIONS, NUMBER_CLASSES])
     c_pred_locations = predictions_locations_all

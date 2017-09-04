@@ -2,12 +2,12 @@ import os
 import yaml
 
 DEFAULT_BOXES = ((-0.5, -0.8, 0.4, 0.5), (0.1, -0.1, -0.1, 0.1), (-0.05, -0.1, 0.05, 0.05), (-0.2, -0.8, 0.2, 0.2))
-FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
-#FEATURE_MAP_SIZES = [[19, 19], [19, 19], [10, 10], [5, 5]]
+#FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
+FEATURE_MAP_SIZES = [[19, 19], [10, 10], [5, 5]]
 # 38 for VGG, then rest for SSD layers
 
 NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
-NUMBER_CLASSES = 2
+NUMBER_CLASSES = 3
 NUMBER_CHANNELS = 3
 
 #TRAINING
