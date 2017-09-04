@@ -72,7 +72,7 @@ def run():
         predictions_all, predictions_locations_all = ssd_layers(conv4_3)
 
         loss_result, true_predictions, true_locations, \
-            prediction_loss_mask = loss_function(predictions_all, predictions_locations_all)
+            prediction_loss_mask, top_k_probabilities = loss_function(predictions_all, predictions_locations_all)
         
         adam = optimizer(loss_result)
 
@@ -89,16 +89,19 @@ def run():
 
                 # Forward pass
 
-                merge = tf.summary.merge_all()
+                #merge = tf.summary.merge_all()
+                # summary, _, loss = sess.run([merge, adam, loss_result]
 
-                summary, _, loss = sess.run([merge, adam, loss_result], feed_dict = {
+                _, loss = sess.run([adam, loss_result], feed_dict = {
                     input_images: images_generated,
                     true_predictions: true_predictions_generated, 
                     true_locations: true_locations_generated,
                     prediction_loss_mask: prediction_loss_mask_generated,
                     keep_prob: KEEP_PROB})
 
-                train_writer.add_summary(summary, index)
+                #train_writer.add_summary(summary, index)
+
+                print (index)
 
                 if index % 5 == 0:
                     print("\n\nEpoch", i)

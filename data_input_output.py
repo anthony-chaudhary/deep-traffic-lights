@@ -85,11 +85,11 @@ def create_boxes(image_dict):
 
     for i, gt_coordinates in enumerate(relative_coordinates):
         prediction_index = 0
-        print("default_box_matches_counter", default_box_matches_counter)
+        #print("default_box_matches_counter", default_box_matches_counter)
         for f in FEATURE_MAP_SIZES:
-            #print("prediction_index", prediction_index)
-            #print("default_box_matches_counter", default_box_matches_counter)
+            #print("prediction_index", prediction_index)      
             
+            #print(f)
             for row in range(f[0]):
                 for col in range(f[1]):
                     for d in DEFAULT_BOXES:
@@ -109,10 +109,12 @@ def create_boxes(image_dict):
                         iou = calc_iou(gt_coordinates, default_coordinates)
                         #print(iou)
 
+                        #print(default_coordinates, gt_coordinates, iou, d)
+
                         if iou >= IOU_THRESHOLD:
 
-                            #print(f, d)
-                            #print(default_coordinates, gt_coordinates)
+                            
+                            print(default_coordinates, gt_coordinates, iou, d, f)
                             #print(iou)
 
                             true_prediction[prediction_index] = classes[i]
@@ -126,6 +128,8 @@ def create_boxes(image_dict):
 
                         prediction_index += 1
     
+    print("default_box_matches_counter", default_box_matches_counter)
+
     prediction_loss_mask = create_prediction_loss_mask(true_prediction)
 
     return true_prediction, true_location, prediction_loss_mask, default_box_matches_counter

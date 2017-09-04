@@ -1,9 +1,10 @@
 import os
 import yaml
 
-DEFAULT_BOXES = ((0.2, 0.3, 0.2, 0.1), (-0.2, -0.3, -0.2, -0.1), (0.01, 0.03, 0.02, 0.01), (-0.05, -0.15, -0.1, -0.05))
+DEFAULT_BOXES = ((0.1, -0.3, 0.1, -.30), (.05, -0.15, .05, -0.15), (0.2, -.4, 0.2, .4), (0.1, -0.2, 0.1, -0.2))
 #FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
 FEATURE_MAP_SIZES = [[19, 19], [10, 10], [5, 5]]
+#FEATURE_MAP_SIZES = [[38, 38], [20, 20], [10, 10]]
 # 38 for VGG, then rest for SSD layers
 
 NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
@@ -32,7 +33,9 @@ print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
 
 
 #Data prep
-IOU_THRESHOLD = .1  # Goal to be .5 as per paper
+IOU_THRESHOLD = .4  # Goal to be .5 as per paper
+CONFIDENCE_THRESHOLD = .5
+
 
 INPUT_YAML = "data/dataset_train_rgb/train.yaml"
 

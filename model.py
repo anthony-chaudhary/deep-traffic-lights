@@ -4,45 +4,6 @@ import tensorflow.contrib.slim as slim
 from hyperparameters import *
 
 #from SSD-Tensorflow
-def tensor_shape(x, rank=3):
-    """Returns the dimensions of a tensor.
-    Args:
-      image: A N-D Tensor of shape.
-    Returns:
-      A list of dimensions. Dimensions that are statically known are python
-        integers,otherwise they are integer scalar tensors.
-    """
-    if x.get_shape().is_fully_defined():
-        return x.get_shape().as_list()
-    else:
-        static_shape = x.get_shape().with_rank(rank).as_list()
-        dynamic_shape = tf.unstack(tf.shape(x), rank)
-        return [s if s is not None else d
-                for s, d in zip(static_shape, dynamic_shape)]
-
-def get_shape(x, rank=None):
-    """Returns the dimensions of a Tensor as list of integers or scale tensors.
-
-    Args:
-      x: N-d Tensor;
-      rank: Rank of the Tensor. If None, will try to guess it.
-    Returns:
-      A list of `[d1, d2, ..., dN]` corresponding to the dimensions of the
-        input tensor.  Dimensions that are statically known are python integers,
-        otherwise they are integer scalar tensors.
-    """
-    if x.get_shape().is_fully_defined():
-        return x.get_shape().as_list()
-    else:
-        static_shape = x.get_shape()
-        if rank is None:
-            static_shape = static_shape.as_list()
-            rank = len(static_shape)
-        else:
-            static_shape = x.get_shape().with_rank(rank).as_list()
-        dynamic_shape = tf.unstack(tf.shape(x), rank)
-        return [s if s is not None else d
-                for s, d in zip(static_shape, dynamic_shape)]
 
 def load_vgg(sess, vgg_path):
 
@@ -63,12 +24,9 @@ def prediction_and_location(net, layer_id, Predictions, Locations):
 
         prediction = slim.conv2d(net, num_anchors*NUMBER_CLASSES, [3,3], 
                                  activation_fn=None, scope='prediction', padding='SAME')
-
-        #prediction = tf.transpose(prediction, perm=(0, 2, 3, 1))  # move channel to last
         prediction = tf.contrib.layers.flatten(prediction)
 
         location = slim.conv2d(net, num_anchors*4, [3,3], activation_fn=None, scope='location')
-        #location = tf.transpose(prediction, perm=(0, 2, 3, 1)) 
         location = tf.contrib.layers.flatten(location)
 
         Predictions.append(prediction)
@@ -85,7 +43,7 @@ def ssd_layers(conv4_3):
                             weights_regularizer=slim.l2_regularizer(1e-2), padding='SAME'):
 
             # This seems to be causing some kind of bug so removed for now
-            #Predictions, Locations = prediction_and_location(conv4_3, 'ssd_vgg_0', Predictions, Locations)
+            Predictions, Locations = prediction_and_location(conv4_3, 'ssd_vgg_0', Predictions, Locations)
 
             net = slim.conv2d(conv4_3, 1024, [3,3], scope='ssd_0')
             net = slim.conv2d(net, 1024, [1,1], scope='ssd_1')
@@ -162,7 +120,7 @@ def loss_function(predictions_all, predictions_locations_all):
     top_k_prediction_probabilities = tf.reshape(top_k_prediction_probabilities, [-1, feature_map_number])
     
 
-    return loss, c_true_predictions, c_true_locations, prediction_loss_mask
+    return loss, c_true_predictions, c_true_locations, prediction_loss_mask, top_k_probabilities
 
 
 
