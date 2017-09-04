@@ -36,17 +36,18 @@ def get_batch_function():
                 random.shuffle(images_list_dict)  ## rename this it's a list of dicts 
                 image = scipy.misc.imread(images_list_dict[i]['path'])
                 image = scipy.misc.imresize(image, [IMAGE_WIDTH, IMAGE_HEIGHT])
-                print(image.shape)
+                #print(image.shape)
                 if image is None:
-                    raise IOError("Could not open", images_list_dict[i]['path']) 
+                    raise IOError("Could not open", images_list_dict[i]['path'])
+                image = image / 127.5 - 1. # normalize
                 Images.append(image)
 
                 true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
             
                 #TODO if default_box_matches_counter <= 0, get new images
 
-                print("true_prediction\t", true_prediction.shape)
-                print("true_location\t", true_location.shape)
+                #print("true_prediction\t", true_prediction.shape)
+                #print("true_location\t", true_location.shape)
 
                 True_predictions.append(true_prediction)
                 True_locations.append(true_location)

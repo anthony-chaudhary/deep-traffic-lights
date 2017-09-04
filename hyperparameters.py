@@ -1,7 +1,7 @@
 import os
 import yaml
 
-DEFAULT_BOXES = ((-0.5, -0.8, 0.4, 0.5), (0.1, -0.1, -0.1, 0.1), (-0.05, -0.1, 0.05, 0.05), (-0.2, -0.8, 0.2, 0.2))
+DEFAULT_BOXES = ((0.2, 0.3, 0.2, 0.1), (-0.2, -0.3, -0.2, -0.1), (0.01, 0.03, 0.02, 0.01), (-0.05, -0.15, -0.1, -0.05))
 #FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
 FEATURE_MAP_SIZES = [[19, 19], [10, 10], [5, 5]]
 # 38 for VGG, then rest for SSD layers
@@ -11,9 +11,9 @@ NUMBER_CLASSES = 3
 NUMBER_CHANNELS = 3
 
 #TRAINING
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-5
 EPOCHS = 1
-BATCH_SIZE = int(1)
+BATCH_SIZE = int(8)
 KEEP_PROB = 1.
 NEGATIVE_OVER_POSITIVE = 3
 
@@ -21,11 +21,10 @@ feature_map_number = 0
 for f in FEATURE_MAP_SIZES:
     feature_map_number += (f[0] * f[1])
 
+# Number of predictions does not include number of classes
 NUMBER_PREDICTIONS = NUMBER_DEFAULT_BOXES * feature_map_number
-#NUMBER_PREDICTIONS = int(10164/NUMBER_CLASSES)
 
 NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
-#NUMBER_LOCATIONS = int(13552)
 
 print("feature_map_number\t", feature_map_number)
 print("NUMBER_PREDICTIONS\t", NUMBER_PREDICTIONS)
@@ -33,7 +32,7 @@ print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
 
 
 #Data prep
-IOU_THRESHOLD = .01  # Goal to be .5 as per paper
+IOU_THRESHOLD = .1  # Goal to be .5 as per paper
 
 INPUT_YAML = "data/dataset_train_rgb/train.yaml"
 
@@ -52,12 +51,16 @@ for i in range(len(images_list_dict)):
 LABEL_DICT =  {
     "Green" : 1,
     "Red" : 2,
-    "GreenLeft" : 0,
-    "GreenRight" : 0,
-    "RedLeft" : 0,
-    "RedRight" : 0,
-    "Yellow" : 0,
+    "GreenLeft" : 1,
+    "GreenRight" : 1,
+    "RedLeft" : 2,
+    "RedRight" : 2,
+    "Yellow" : 2,
     "off" : 0,
     "RedStraight" : 2,
-    "GreenStraight" : 1
+    "GreenStraight" : 1,
+    "GreenStraightLeft" : 1,
+    "GreenStraightRight" : 1,
+    "RedStraightLeft" : 2,
+    "RedStraightRight" : 1
     }

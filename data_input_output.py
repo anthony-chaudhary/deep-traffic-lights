@@ -33,7 +33,7 @@ def create_prediction_loss_mask(true_prediction):
     number_positive = np.where(true_prediction > 0)[0].shape[0]
     number_negative = NEGATIVE_OVER_POSITIVE * number_positive
     true_prediction_size = np.sum(true_prediction.shape)
-    print(number_negative, number_negative, true_prediction_size)
+    #print(number_negative, number_negative, true_prediction_size)
     #print(true_prediction.shape)
 
     if number_positive + number_negative < true_prediction_size:
@@ -70,12 +70,12 @@ def create_boxes(image_dict):
         
         integer_label = LABEL_DICT[box['label']]  # Convert string labels to integers
         classes.append(integer_label)
-        print(box['label'])
+        #print(box['label'])
         coordinates = np.array([box['x_min'], box['y_min'], box['x_max'], box['y_max']])
         scale = np.array([1280, 720, 1280, 720])
         relative_coordinates.append(coordinates / scale)
 
-    print(len(relative_coordinates))
+    # print(len(relative_coordinates))
     # Init
    
     true_prediction = np.zeros(NUMBER_PREDICTIONS)
@@ -85,9 +85,10 @@ def create_boxes(image_dict):
 
     for i, gt_coordinates in enumerate(relative_coordinates):
         prediction_index = 0
+        print("default_box_matches_counter", default_box_matches_counter)
         for f in FEATURE_MAP_SIZES:
-            print("prediction_index", prediction_index)
-            print("default_box_matches_counter", default_box_matches_counter)
+            #print("prediction_index", prediction_index)
+            #print("default_box_matches_counter", default_box_matches_counter)
             
             for row in range(f[0]):
                 for col in range(f[1]):
