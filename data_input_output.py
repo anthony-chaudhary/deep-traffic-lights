@@ -107,15 +107,11 @@ def create_boxes(image_dict):
                         #print(default_coordinates, gt_coordinates)
 
                         iou = calc_iou(gt_coordinates, default_coordinates)
-                        #print(iou)
 
                         #print(default_coordinates, gt_coordinates, iou, d)
 
                         if iou >= IOU_THRESHOLD:
-
-                            
-                            print(default_coordinates, gt_coordinates, iou, d, f)
-                            #print(iou)
+                            #print(default_coordinates, gt_coordinates, iou, d, f)
 
                             true_prediction[prediction_index] = classes[i]
                             
@@ -171,6 +167,8 @@ def get_batch_function():
                 #Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
                 #True_locations_ = np.concatenate(np.array(True_locations))
             
+            print("batch processed")
+
             yield np.array(Images), True_predictions, True_locations, Prediction_loss_masks
     
     return get_batches_fn

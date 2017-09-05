@@ -1,14 +1,107 @@
 from hyperparameters import *
 from data_input_output import calc_iou
+import time
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+import scipy
+import tensorflow as tf
+from model import ssd_layers, loss_function, load_vgg, optimizer
+import time
+import numpy as np
+import cv2
 
 def get_test_output():
+    
+    # handle multiple?
     pass
-    #TODO
 
 
+def run():
 
-def save_samples():
-    pass
+    with tf.Session() as sess:
+        
+        # refactor to share with train
+        input_images, conv4_3, conv5_3, keep_prob = load_vgg(sess, VGG_PATH)
+        predictions_all, predictions_locations_all = ssd_layers(conv4_3, conv5_3)
+        loss_result, true_predictions, true_locations, \
+            prediction_loss_mask, top_k_probabilities = loss_function(predictions_all, predictions_locations_all)
+        adam = optimizer(loss_result)
+        sess.run(tf.global_variables_initializer())
+
+        saver = tf.train.Saver()
+        saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
+        print("Model restored")
+        
+        run_image(sess, input_images, predictions_all, predictions_locations_all, top_k_probabilities)
+        
+
+def run_image(sess, input_images, predictions_all, predictions_locations_all, top_k_probabilities):
+
+    """
+    image_file_path, string
+
+    """
+    
+    image_file_path = "22360.png"
+    image = scipy.misc.imread(image_file_path)
+    if image is None:
+        raise IOError("Could not open", image_file_path)
+
+    image_modified = scipy.misc.imresize(image, [IMAGE_WIDTH, IMAGE_HEIGHT])
+    image_modified = image_modified / 127.5 - 1. # normalize
+    image_modified = [image_modified, image_modified]  # Change to be batch size of 1!
+    image_modified = np.array(image_modified)  # batch of 1
+
+    t0 = time.time()
+
+    confidence_out, locations_out, probabilities_out = sess.run([predictions_all, 
+                                                                 predictions_locations_all, 
+                                                                 top_k_probabilities],
+                                                                feed_dict={input_images: image_modified})
+
+    boxes = [locations_out[0], confidence_out[0].astype("float32"), probabilities_out[0]]
+
+    print(boxes)
+
+    # TODO add NMS here.
+
+    t1 = time.time()
+
+    print("Inference time (seconds)", t1 - t0)
+
+    scale = np.array([1280/IMAGE_WIDTH, 720/IMAGE_HEIGHT, 1280/IMAGE_WIDTH, 720/IMAGE_HEIGHT])
+    
+    #if len(boxes) > 0:
+        #boxes[ :, : 4] = boxes[:, :4] * scale
+
+    # Drawing
+    for b in boxes:
+
+        b_coords = [round(x) for x in b[:4]]
+        b_coords = b_coords*scale
+        b_coords = [int(x) for x in b_coords]  # refactor this bad way to do it
+        print(b_coords)
+        cls = int(b[4])
+        cls_prob = b[5]
+
+        image = cv2.rectangle(image, tuple(b_coords[:2]), tuple(b_coords[2:]), (0,255,0))
+        label_str = '%s %.2f' % (cls, cls_prob)
+        image = cv2.putText(image, label_str, (b_coords[0], b_coords[1]), 0, 0.5, (0,255,0), 1, cv2.LINE_AA)
+    
+    save_samples(image)
+
+    return 0
+
+
+def save_samples(image):
+    
+    out = os.path.join("runs", str(time.time()))
+    os.makedirs(out)
+    print("Saving samples to", out)
+
+    # can change to save multiple here if wanted
+    scipy.misc.imsave(os.path.join(out, "22360.png"), image)
+
 
 
 def nms(confidences, locations, top_k_probabilities):
@@ -73,3 +166,8 @@ def nms(confidences, locations, top_k_probabilities):
     boxes = np.array(boxes)
 
     return boxes
+
+
+if __name__ == '__main__':
+
+    run()

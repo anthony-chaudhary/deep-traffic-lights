@@ -13,7 +13,7 @@ LEARNING_RATE = 1e-5
 EPOCHS = 1
 BATCH_SIZE = int(8)
 KEEP_PROB = 1.
-NEGATIVE_OVER_POSITIVE = 3
+NEGATIVE_OVER_POSITIVE = 5
 
 feature_map_number = 0
 for f in FEATURE_MAP_SIZES:
@@ -38,6 +38,7 @@ TEST_IOU_THRESHOLD = .1
 INPUT_YAML = "data/dataset_train_rgb/train.yaml"
 
 data_dir = './data'
+
 VGG_PATH = os.path.join(data_dir, 'vgg')
 IMAGE_WIDTH = 512
 IMAGE_HEIGHT = 512
@@ -45,7 +46,8 @@ IMAGE_HEIGHT = 512
 images_list_dict = yaml.load(open(INPUT_YAML, 'rb').read())
 for i in range(len(images_list_dict)):
     images_list_dict[i]['path'] = os.path.abspath(os.path.join(os.path.dirname(INPUT_YAML), images_list_dict[i]['path']))
-    
+ 
+images_list_dict = images_list_dict[ :1600]
 
 
 # Background_class_is : 0 
@@ -56,12 +58,12 @@ LABEL_DICT =  {
     "GreenRight" : 1,
     "RedLeft" : 2,
     "RedRight" : 2,
-    "Yellow" : 2,
+    "Yellow" : 0,
     "off" : 0,
     "RedStraight" : 2,
     "GreenStraight" : 1,
     "GreenStraightLeft" : 1,
     "GreenStraightRight" : 1,
     "RedStraightLeft" : 2,
-    "RedStraightRight" : 1
+    "RedStraightRight" : 2
     }

@@ -65,9 +65,9 @@ def ssd_layers(conv4_3, conv5_pool):
 def loss_function(predictions_all, predictions_locations_all):
 
        
-    true_predictions = tf.placeholder(tf.int32, [BATCH_SIZE, NUMBER_PREDICTIONS], name="true_predictions")
-    true_locations = tf.placeholder(tf.float32, [BATCH_SIZE, NUMBER_LOCATIONS], name="true_locations")
-    prediction_loss_mask = tf.placeholder(tf.float32, [BATCH_SIZE, NUMBER_PREDICTIONS], name="prediction_mask")
+    true_predictions = tf.placeholder(tf.int32, [None, NUMBER_PREDICTIONS], name="true_predictions")
+    true_locations = tf.placeholder(tf.float32, [None, NUMBER_LOCATIONS], name="true_locations")
+    prediction_loss_mask = tf.placeholder(tf.float32, [None, NUMBER_PREDICTIONS], name="prediction_mask")
 
     c_pred_predictions = tf.reshape(predictions_all, [-1, NUMBER_PREDICTIONS, NUMBER_CLASSES])
     c_pred_locations = predictions_locations_all
@@ -85,6 +85,8 @@ def loss_function(predictions_all, predictions_locations_all):
 
     location_difference = c_true_locations - c_pred_locations
 
+    tf.summary.histogram("location_difference", location_difference)
+
     location_loss_l2 = .5 * (pow(location_difference, 2))
     location_loss_l1 = tf.abs(location_difference) - .5
     smooth_l1 = tf.less(tf.abs(location_difference), 1.0)
@@ -95,17 +97,21 @@ def loss_function(predictions_all, predictions_locations_all):
 
     # or could multiple by classes / boxes to normalize?
     location_loss_mask = tf.stack([location_loss_mask] * 4, axis=2)  # Stacking locations for each prediction box?
-    print(location_loss_mask)
+    #print(location_loss_mask)
     #location_loss_mask = tf.expand_dims(location_loss_mask, axis=-1)
     location_loss_mask = tf.reshape(location_loss_mask, [-1, NUMBER_LOCATIONS])
     
-    print(location_loss_mask)
-    print(location_loss)
+    #print(location_loss_mask)
+    #print(location_loss)
     location_loss *= location_loss_mask
     
     location_loss = tf.reduce_sum(location_loss)
     loss = prediction_loss + location_loss + tf.reduce_sum(tf.losses.get_regularization_losses())
     
+    tf.summary.histogram("prediction_loss", prediction_loss)
+    tf.summary.histogram("location loss", location_loss)
+    tf.summary.histogram("loss", loss)
+
     all_probabilities = tf.nn.softmax(c_pred_predictions)
     top_k_probabilities, top_k_prediction_probabilities = tf.nn.top_k(all_probabilities)
     top_k_probabilities = tf.reshape(top_k_probabilities, [-1, feature_map_number])

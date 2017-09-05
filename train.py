@@ -39,23 +39,22 @@ def run():
 
                 # Forward pass
 
-                #merge = tf.summary.merge_all()
-                # summary, _, loss = sess.run([merge, adam, loss_result]
-
-                _, loss = sess.run([adam, loss_result], feed_dict = {
+                merge = tf.summary.merge_all()
+                
+                summary, _, loss = sess.run([merge, adam, loss_result], feed_dict = {
                     input_images: images_generated,
                     true_predictions: true_predictions_generated, 
                     true_locations: true_locations_generated,
                     prediction_loss_mask: prediction_loss_mask_generated,
                     keep_prob: KEEP_PROB})
 
-                #train_writer.add_summary(summary, index)
+                train_writer.add_summary(summary, index)
 
-                print (index)
+                print(index)
 
                 if index % 5 == 0:
                     print("\n\nEpoch", i)
-                    print("Loss {:.5f}...".format(loss))
+                    print("Loss \t {:.5f}...\n\n".format(loss))
 
                 index += 1
 
