@@ -1,6 +1,7 @@
 import numpy as np
 from hyperparameters import *
-
+import random
+import scipy
 
 def calc_iou(box_a, box_b):
 	"""
@@ -49,8 +50,7 @@ def create_prediction_loss_mask(true_prediction):
 
         #print(prediction_loss_mask.shape)
 
-        for z in choosen_zero_indices:
-            i = z
+        for i in choosen_zero_indices:
             prediction_loss_mask[i] = 1.
 
     else:
@@ -134,3 +134,43 @@ def create_boxes(image_dict):
 
     return true_prediction, true_location, prediction_loss_mask, default_box_matches_counter
 
+
+def get_batch_function():
+    
+    def get_batches_fn():
+          # in hyper paramters
+        #print(images_list_dict)
+
+        for batch_i in range(0, len(images_list_dict), BATCH_SIZE):
+            
+            Images, True_predictions, True_locations, Prediction_loss_masks = [], [], [], []
+                    
+            for i in range(len(images_list_dict[batch_i : batch_i+BATCH_SIZE])):
+
+                random.shuffle(images_list_dict)  ## rename this it's a list of dicts 
+                image = scipy.misc.imread(images_list_dict[i]['path'])
+                image = scipy.misc.imresize(image, [IMAGE_WIDTH, IMAGE_HEIGHT])
+                #print(image.shape)
+                if image is None:
+                    raise IOError("Could not open", images_list_dict[i]['path'])
+                image = image / 127.5 - 1. # normalize
+                Images.append(image)
+
+                true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
+            
+                #TODO if default_box_matches_counter <= 0, get new images
+
+                #print("true_prediction\t", true_prediction.shape)
+                #print("true_location\t", true_location.shape)
+
+                True_predictions.append(true_prediction)
+                True_locations.append(true_location)
+                Prediction_loss_masks.append(prediction_loss_mask)
+        
+                #True_predictions_ = np.concatenate(np.array(True_predictions))
+                #Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
+                #True_locations_ = np.concatenate(np.array(True_locations))
+            
+            yield np.array(Images), True_predictions, True_locations, Prediction_loss_masks
+    
+    return get_batches_fn

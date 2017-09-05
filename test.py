@@ -1,4 +1,5 @@
 from hyperparameters import *
+from data_input_output import calc_iou
 
 def get_test_output():
     pass
@@ -41,6 +42,34 @@ def nms(confidences, locations, top_k_probabilities):
 
                         # Compare
 
-                        class = confidences[i]
+                        c = confidences[i]  # Class
                         class_probability = top_k_probabilities[i]
+                        box = (*box_coordinates_array, classes, class_probability)
 
+                        if (len(class_boxes) == 0):  # Init case
+                            class_boxes[c].append(box)
+                        else:
+                            suppresed = False
+                            overlap = False
+
+                            for j in class_boxes[c]:
+
+                                iou = calc_iou(box[ : 4], j[:4])
+
+                                if iou > TEST_IOU_THRESHOLD:
+
+                                    overlap = True
+
+                                    if box[5] > j[5]: #confidence
+                                        class_boxes[c].remove(j)
+                                        suppresed = True
+                            if suppresed or not overlap:
+                                class_boxes[c].append(box)
+                    i += 1
+    boxes = []
+    for c in class_boxes:
+        for c_box in class_boxes[c]:
+            boxes.append(c_box)
+    boxes = np.array(boxes)
+
+    return boxes

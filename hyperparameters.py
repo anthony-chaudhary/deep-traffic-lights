@@ -2,10 +2,7 @@ import os
 import yaml
 
 DEFAULT_BOXES = ((0.1, -0.3, 0.1, -.30), (.05, -0.15, .05, -0.15), (0.2, -.4, 0.2, .4), (0.1, -0.2, 0.1, -0.2))
-#FEATURE_MAP_SIZES = [[38, 38], [19, 19], [10, 10], [5, 5]]
-FEATURE_MAP_SIZES = [[19, 19], [10, 10], [5, 5]]
-#FEATURE_MAP_SIZES = [[38, 38], [20, 20], [10, 10]]
-# 38 for VGG, then rest for SSD layers
+FEATURE_MAP_SIZES = [[64, 64], [32, 32], [16, 16], [8, 8]]
 
 NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
 NUMBER_CLASSES = 3
@@ -23,6 +20,7 @@ for f in FEATURE_MAP_SIZES:
     feature_map_number += (f[0] * f[1])
 
 # Number of predictions does not include number of classes
+# We assign each class a value [0, 1... n] 
 NUMBER_PREDICTIONS = NUMBER_DEFAULT_BOXES * feature_map_number
 
 NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
@@ -35,14 +33,14 @@ print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
 #Data prep
 IOU_THRESHOLD = .4  # Goal to be .5 as per paper
 CONFIDENCE_THRESHOLD = .5
-
+TEST_IOU_THRESHOLD = .1
 
 INPUT_YAML = "data/dataset_train_rgb/train.yaml"
 
 data_dir = './data'
 VGG_PATH = os.path.join(data_dir, 'vgg')
-IMAGE_WIDTH = 300
-IMAGE_HEIGHT = 300
+IMAGE_WIDTH = 512
+IMAGE_HEIGHT = 512
 
 images_list_dict = yaml.load(open(INPUT_YAML, 'rb').read())
 for i in range(len(images_list_dict)):
