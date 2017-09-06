@@ -13,7 +13,7 @@ LEARNING_RATE = 1e-5
 EPOCHS = 1
 BATCH_SIZE = int(8)
 KEEP_PROB = 1.
-NEGATIVE_OVER_POSITIVE = 5
+NEGATIVE_OVER_POSITIVE = 3
 
 feature_map_number = 0
 for f in FEATURE_MAP_SIZES:
@@ -21,17 +21,17 @@ for f in FEATURE_MAP_SIZES:
 
 # Number of predictions does not include number of classes
 # We assign each class a value [0, 1... n] 
-NUMBER_PREDICTIONS = NUMBER_DEFAULT_BOXES * feature_map_number
+NUMBER_CONFIDENCES = NUMBER_DEFAULT_BOXES * feature_map_number
 
 NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
 
 print("feature_map_number\t", feature_map_number)
-print("NUMBER_PREDICTIONS\t", NUMBER_PREDICTIONS)
+print("NUMBER_PREDICTIONS\t", NUMBER_CONFIDENCES)
 print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
 
 
 #Data prep
-IOU_THRESHOLD = .4  # Goal to be .5 as per paper
+IOU_THRESHOLD = .5  # Goal to be .5 as per paper
 CONFIDENCE_THRESHOLD = .5
 TEST_IOU_THRESHOLD = .1
 
@@ -46,8 +46,8 @@ IMAGE_HEIGHT = 512
 images_list_dict = yaml.load(open(INPUT_YAML, 'rb').read())
 for i in range(len(images_list_dict)):
     images_list_dict[i]['path'] = os.path.abspath(os.path.join(os.path.dirname(INPUT_YAML), images_list_dict[i]['path']))
- 
-images_list_dict = images_list_dict[ :1600]
+print("images_list_dict", len(images_list_dict))
+images_list_dict = images_list_dict[ :4800]
 
 
 # Background_class_is : 0 
@@ -58,9 +58,9 @@ LABEL_DICT =  {
     "GreenRight" : 1,
     "RedLeft" : 2,
     "RedRight" : 2,
-    "Yellow" : 0,
-    "off" : 0,
-    "RedStraight" : 2,
+    "Yellow" : 1,
+    "off" : 1,
+    "RedStraight" : 1,
     "GreenStraight" : 1,
     "GreenStraightLeft" : 1,
     "GreenStraightRight" : 1,

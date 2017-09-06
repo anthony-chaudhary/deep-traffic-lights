@@ -22,9 +22,9 @@ def run():
         
         # refactor to share with train
         input_images, conv4_3, conv5_3, keep_prob = load_vgg(sess, VGG_PATH)
-        predictions_all, predictions_locations_all = ssd_layers(conv4_3, conv5_3)
+        confidences_all, locations_all = ssd_layers(conv4_3, conv5_3)
         loss_result, true_predictions, true_locations, \
-            prediction_loss_mask, top_k_probabilities = loss_function(predictions_all, predictions_locations_all)
+            confidences_loss_mask, top_k_probabilities = loss_function(confidences_all, locations_all)
         adam = optimizer(loss_result)
         sess.run(tf.global_variables_initializer())
 
@@ -32,10 +32,10 @@ def run():
         saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
         print("Model restored")
         
-        run_image(sess, input_images, predictions_all, predictions_locations_all, top_k_probabilities)
+        run_image(sess, input_images, confidences_all, locations_all, top_k_probabilities)
         
 
-def run_image(sess, input_images, predictions_all, predictions_locations_all, top_k_probabilities):
+def run_image(sess, input_images, confidences_all, locations_all, top_k_probabilities):
 
     """
     image_file_path, string
@@ -54,8 +54,8 @@ def run_image(sess, input_images, predictions_all, predictions_locations_all, to
 
     t0 = time.time()
 
-    confidence_out, locations_out, probabilities_out = sess.run([predictions_all, 
-                                                                 predictions_locations_all, 
+    confidence_out, locations_out, probabilities_out = sess.run([confidences_all, 
+                                                                 locations_all, 
                                                                  top_k_probabilities],
                                                                 feed_dict={input_images: image_modified})
 

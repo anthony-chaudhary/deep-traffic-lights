@@ -21,9 +21,9 @@ def run():
     with tf.Session() as sess:   
         
         input_images, conv4_3, conv5_3, keep_prob = load_vgg(sess, VGG_PATH)
-        predictions_all, predictions_locations_all = ssd_layers(conv4_3, conv5_3)
+        confidences_all, locations_all = ssd_layers(conv4_3, conv5_3)
         loss_result, true_predictions, true_locations, \
-            prediction_loss_mask, top_k_probabilities = loss_function(predictions_all, predictions_locations_all)
+            prediction_loss_mask, top_k_probabilities = loss_function(confidences_all, locations_all)
         
         adam = optimizer(loss_result)
         get_batches_fn = get_batch_function()  # yields batches
@@ -59,6 +59,7 @@ def run():
                 index += 1
 
         #TODO timing / performance
+        #TODO add to change to time
         saver.save(sess, "checkpoints/a.ckpt")
         print("Saved")
 
