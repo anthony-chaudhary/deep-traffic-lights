@@ -147,3 +147,7 @@ tensorboard/events.out.tfevents.1503774000.DESKTOP-V4CJITU
 *.sqlite-journal
 /tensorboard
 *.DESKTOP-V4CJITU
+*.data-00000-of-00001
+*.index
+/runs
+/checkpoints

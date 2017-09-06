@@ -1,7 +1,10 @@
 import os
 import yaml
 
-DEFAULT_BOXES = ((0.1, -0.3, 0.1, -.30), (.05, -0.15, .05, -0.15), (0.2, -.4, 0.2, .4), (0.1, -0.2, 0.1, -0.2))
+#DEFAULT_BOXES = ((0.1, -0.3, 0.1, -.30), (.01, 0.03, .01, 0.03), (.01, -0.01, .01, 0.01), (0.2, -.4, 0.2, .4), (0.1, -0.2, 0.1, -0.2))
+#DEFAULT_BOXES = ((0.1, -0.3, 0.1, -.30), (.01, 0.03, .01, 0.03), (.01, -0.01, .01, 0.01), (0.2, -.4, 0.2, .4))
+DEFAULT_BOXES = ((-0.1, -0.1, 0.1, 0.1), (0.2, 0.3, -0.2, -0.3), (-0.1, -0.3, 0.1, 0.3), (-0.2, -0.8, 0.2, 0.8))
+
 FEATURE_MAP_SIZES = [[64, 64], [32, 32], [16, 16], [8, 8]]
 
 NUMBER_DEFAULT_BOXES = len(DEFAULT_BOXES)
@@ -22,18 +25,17 @@ for f in FEATURE_MAP_SIZES:
 # Number of predictions does not include number of classes
 # We assign each class a value [0, 1... n] 
 NUMBER_CONFIDENCES = NUMBER_DEFAULT_BOXES * feature_map_number
-
 NUMBER_LOCATIONS = 4 * NUMBER_DEFAULT_BOXES * feature_map_number
 
 print("feature_map_number\t", feature_map_number)
-print("NUMBER_PREDICTIONS\t", NUMBER_CONFIDENCES)
+print("NUMBER_CONFIDENCES\t", NUMBER_CONFIDENCES)
 print("NUMBER_LOCATIONS\t", NUMBER_LOCATIONS)
 
 
 #Data prep
-IOU_THRESHOLD = .5  # Goal to be .5 as per paper
-CONFIDENCE_THRESHOLD = .5
-TEST_IOU_THRESHOLD = .1
+IOU_THRESHOLD = .4
+CONFIDENCE_THRESHOLD = .9
+TEST_IOU_THRESHOLD = .2
 
 INPUT_YAML = "data/dataset_train_rgb/train.yaml"
 
@@ -60,7 +62,7 @@ LABEL_DICT =  {
     "RedRight" : 2,
     "Yellow" : 1,
     "off" : 1,
-    "RedStraight" : 1,
+    "RedStraight" : 2,
     "GreenStraight" : 1,
     "GreenStraightLeft" : 1,
     "GreenStraightRight" : 1,

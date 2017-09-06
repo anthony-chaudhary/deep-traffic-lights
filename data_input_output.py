@@ -4,28 +4,31 @@ import random
 import scipy
 
 def calc_iou(box_a, box_b):
-	"""
+    """
     FROM https://github.com/georgesung/ssd_tensorflow_traffic_sign_detection
 
-	Calculate the Intersection Over Union of two boxes
-	Each box specified by upper left corner and lower right corner:
-	(x1, y1, x2, y2), where 1 denotes upper left corner, 2 denotes lower right corner
+    Calculate the Intersection Over Union of two boxes
+    Each box specified by upper left corner and lower right corner:
+    (x1, y1, x2, y2), where 1 denotes upper left corner, 2 denotes lower right corner
 
-	Returns IOU value
-	"""
-	# Calculate intersection, i.e. area of overlap between the 2 boxes (could be 0)
-	# http://math.stackexchange.com/a/99576
-	x_overlap = max(0, min(box_a[2], box_b[2]) - max(box_a[0], box_b[0]))
-	y_overlap = max(0, min(box_a[3], box_b[3]) - max(box_a[1], box_b[1]))
-	intersection = x_overlap * y_overlap
+    Returns IOU value
+    """
+    # Calculate intersection, i.e. area of overlap between the 2 boxes (could be 0)
+    # http://math.stackexchange.com/a/99576
+    x_overlap = max(0, min(box_a[2], box_b[2]) - max(box_a[0], box_b[0]))
+    y_overlap = max(0, min(box_a[3], box_b[3]) - max(box_a[1], box_b[1]))
+    intersection = x_overlap * y_overlap
 
-	# Calculate union
-	area_box_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
-	area_box_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
-	union = area_box_a + area_box_b - intersection
+    # Calculate union
+    area_box_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
+    area_box_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
+    union = area_box_a + area_box_b - intersection
 
-	iou = intersection / union
-	return iou
+    if union == 0:
+        return 0
+
+    iou = intersection / union
+    return iou
 
 
 
@@ -33,16 +36,16 @@ def create_prediction_loss_mask(true_prediction):
 
     number_positive = np.where(true_prediction > 0)[0].shape[0]
     number_negative = NEGATIVE_OVER_POSITIVE * number_positive
-    true_prediction_size = np.sum(true_prediction.shape)
+    true_confidence_size = np.sum(true_prediction.shape)
     #print(number_negative, number_negative, true_prediction_size)
     #print(true_prediction.shape)
 
-    if number_positive + number_negative < true_prediction_size:
+    if number_positive + number_negative < true_confidence_size:
 
-        prediction_loss_mask = np.copy(true_prediction)
-        prediction_loss_mask[np.where(prediction_loss_mask > 0)] = 1.
+        confidence_loss_mask = np.copy(true_prediction)
+        confidence_loss_mask[np.where(confidence_loss_mask > 0)] = 1.
 
-        zero_indices = np.where(prediction_loss_mask == 0.)
+        zero_indices = np.where(confidence_loss_mask == 0.)
         zero_indices = np.transpose(zero_indices)
         # not needed as we are processing images individually?
 
@@ -51,12 +54,12 @@ def create_prediction_loss_mask(true_prediction):
         #print(prediction_loss_mask.shape)
 
         for i in choosen_zero_indices:
-            prediction_loss_mask[i] = 1.
+            confidence_loss_mask[i] = 1.
 
     else:
-        prediction_loss_mask = np.ones_like(true_prediction)
+        confidence_loss_mask = np.ones_like(true_prediction)
 
-    return prediction_loss_mask
+    return confidence_loss_mask
 
 
 def create_boxes(image_dict):
@@ -67,13 +70,14 @@ def create_boxes(image_dict):
     relative_coordinates = []
 
     for box in image_dict['boxes']:
-        
-        integer_label = LABEL_DICT[box['label']]  # Convert string labels to integers
-        classes.append(integer_label)
-        #print(box['label'])
-        coordinates = np.array([box['x_min'], box['y_min'], box['x_max'], box['y_max']])
-        scale = np.array([1280, 720, 1280, 720])
-        relative_coordinates.append(coordinates / scale)
+        if box['occluded'] is False:
+
+            integer_label = LABEL_DICT[box['label']]  # Convert string labels to integers
+            classes.append(integer_label)
+            #print(box['label'])
+            coordinates = np.array([box['x_min'], box['y_min'], box['x_max'], box['y_max']])
+            scale = np.array([1280, 720, 1280, 720])
+            relative_coordinates.append(coordinates / scale)
 
     # print(len(relative_coordinates))
     # Init
@@ -87,11 +91,9 @@ def create_boxes(image_dict):
         prediction_index = 0
         #print("default_box_matches_counter", default_box_matches_counter)
         for f in FEATURE_MAP_SIZES:
-            #print("prediction_index", prediction_index)      
-            
-            #print(f)
-            for row in range(f[0]):
-                for col in range(f[1]):
+            h, w = f
+            for row in range(h):
+                for col in range(w):
                     for d in DEFAULT_BOXES:
                         
                         x1_offset, y1_offset, x2_offset, y2_offset = d
@@ -100,9 +102,9 @@ def create_boxes(image_dict):
                         a = np.array([
                             max(0, col + x1_offset),
                             max(0, row + y1_offset),
-							min(f[1], col+1 + x2_offset),
-							min(f[0], row+1 + y2_offset) ])
-                        scale = np.array([f[1], f[0], f[1], f[0]])
+							min(w, col+1 + x2_offset),
+							min(h, row+1 + y2_offset) ])
+                        scale = np.array([w, h, w, h])
                         default_coordinates = a / scale
                         #print(default_coordinates, gt_coordinates)
 
@@ -114,13 +116,15 @@ def create_boxes(image_dict):
                             #print(default_coordinates, gt_coordinates, iou, d, f)
 
                             true_prediction[prediction_index] = classes[i]
-                            
+                            #print(classes[i])
+
                             default_box_matches_counter += 1
 
                             center = np.array([col + .5, row + .5])
                             absolute_gt_coordinates = gt_coordinates * scale
                             new_coordinates = absolute_gt_coordinates - np.concatenate((center, center))
-                            true_location[prediction_index : prediction_index + 4] = new_coordinates
+                            true_location[prediction_index * 4: prediction_index * 4 + 4] = new_coordinates
+                            #print(true_location[prediction_index * 4: prediction_index * 4 + 4])
 
                         prediction_index += 1
     
@@ -128,14 +132,16 @@ def create_boxes(image_dict):
 
     prediction_loss_mask = create_prediction_loss_mask(true_prediction)
 
+    #print(true_prediction)
+    #print(true_location)
+
+
     return true_prediction, true_location, prediction_loss_mask, default_box_matches_counter
 
 
 def get_batch_function():
     
     def get_batches_fn():
-          # in hyper paramters
-        #print(images_list_dict)
 
         for batch_i in range(0, len(images_list_dict), BATCH_SIZE):
             
@@ -154,18 +160,9 @@ def get_batch_function():
 
                 true_prediction, true_location, prediction_loss_mask, default_box_matches_counter = create_boxes(images_list_dict[i])
             
-                #TODO if default_box_matches_counter <= 0, get new images
-
-                #print("true_prediction\t", true_prediction.shape)
-                #print("true_location\t", true_location.shape)
-
                 True_predictions.append(true_prediction)
                 True_locations.append(true_location)
                 Prediction_loss_masks.append(prediction_loss_mask)
-        
-                #True_predictions_ = np.concatenate(np.array(True_predictions))
-                #Prediction_loss_masks_ = np.concatenate(np.array(Prediction_loss_masks))
-                #True_locations_ = np.concatenate(np.array(True_locations))
             
             print("batch processed")
 

@@ -38,7 +38,8 @@ def ssd_layers(conv4_3, conv5_pool):
 
     with tf.variable_scope("ssd_300"):
         with slim.arg_scope([slim.conv2d], normalizer_fn=slim.batch_norm, 
-                            weights_regularizer=slim.l2_regularizer(1e-3), padding='SAME'):
+                            weights_regularizer=slim.l2_regularizer(1e-3),
+                            padding='SAME'):
 
 
             net = slim.conv2d(conv4_3, 1024, [3,3], scope='ssd_0')
@@ -95,11 +96,17 @@ def loss_function(confidences_all, locations_all):
     tf.summary.histogram("loss", loss)
 
     all_probabilities = tf.nn.softmax(confidences)
-    top_k_probabilities, top_k_prediction_probabilities = tf.nn.top_k(all_probabilities)
-    top_k_probabilities = tf.reshape(top_k_probabilities, [-1, feature_map_number])
-    top_k_prediction_probabilities = tf.reshape(top_k_prediction_probabilities, [-1, feature_map_number])
+    probabilities, probability_confidences = tf.nn.top_k(all_probabilities)
     
-    return loss, true_confidences, true_locations, confidence_loss_mask, top_k_probabilities
+    tf.summary.histogram("probabilities", probabilities)
+    tf.summary.histogram("probability_confidences", probability_confidences)
+
+    probabilities = tf.reshape(probabilities, [-1, NUMBER_CONFIDENCES])
+    probability_confidences = tf.reshape(probability_confidences, [-1, NUMBER_CONFIDENCES])
+    
+    tf.summary.histogram("probability_confidences", probability_confidences)
+
+    return loss, probabilities, probability_confidences, true_locations, true_confidences, confidence_loss_mask
 
 
 

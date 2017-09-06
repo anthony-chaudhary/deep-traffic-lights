@@ -23,25 +23,26 @@ def run():
         # refactor to share with train
         input_images, conv4_3_pool, conv4_3_relu, keep_prob = load_vgg(sess, VGG_PATH)
         confidences_all, locations_all = ssd_layers(conv4_3_pool, conv4_3_relu)
-        loss_result, true_predictions, true_locations, \
-            confidences_loss_mask, top_k_probabilities = loss_function(confidences_all, locations_all)
-        adam = optimizer(loss_result)
+        loss, probabilities, probability_confidences , \
+            true_locations, true_confidences, confidence_loss_mask = loss_function(confidences_all, locations_all)
+        
         sess.run(tf.global_variables_initializer())
 
         saver = tf.train.Saver()
         saver.restore(sess, tf.train.latest_checkpoint('checkpoints'))
         print("Model restored")
         
-        run_image(sess, input_images, confidences_all, locations_all, top_k_probabilities)
+        run_image(sess, input_images, locations_all, probability_confidences, probabilities)
         
 
-def run_image(sess, input_images, confidences_all, locations_all, top_k_probabilities):
+def run_image(sess, input_images, locations_all, probability_confidences, probabilities):
 
     """
     image_file_path, string
 
     """
     
+    # Refactor to test multiple images
     image_file_path = "22360.png"
     image = scipy.misc.imread(image_file_path)
     if image is None:
@@ -49,21 +50,18 @@ def run_image(sess, input_images, confidences_all, locations_all, top_k_probabil
 
     image_modified = scipy.misc.imresize(image, [IMAGE_WIDTH, IMAGE_HEIGHT])
     image_modified = image_modified / 127.5 - 1. # normalize
-    image_modified = [image_modified, image_modified]  # Change to be batch size of 1!
+    image_modified = [image_modified]  # Change to be batch size of 1!
     image_modified = np.array(image_modified)  # batch of 1
 
     t0 = time.time()
 
-    confidence_out, locations_out, probabilities_out = sess.run([confidences_all, 
+    confidence_out, locations_out, probabilities_out = sess.run([probability_confidences, 
                                                                  locations_all, 
-                                                                 top_k_probabilities],
+                                                                 probabilities],
                                                                 feed_dict={input_images: image_modified})
 
-    boxes = [locations_out[0], confidence_out[0].astype("float32"), probabilities_out[0]]
-
-    print(boxes)
-
-    # TODO add NMS here.
+    
+    boxes = nms(locations_out[0], confidence_out[0].astype("float32"), probabilities_out[0])
 
     t1 = time.time()
 
@@ -80,12 +78,13 @@ def run_image(sess, input_images, confidences_all, locations_all, top_k_probabil
         b_coords = [round(x) for x in b[:4]]
         b_coords = b_coords*scale
         b_coords = [int(x) for x in b_coords]  # refactor this bad way to do it
-        print(b_coords)
+        #print("b_coords", b_coords)
         cls = int(b[4])
         cls_prob = b[5]
 
         image = cv2.rectangle(image, tuple(b_coords[:2]), tuple(b_coords[2:]), (0,255,0))
         label_str = '%s %.2f' % (cls, cls_prob)
+        #print(label_str)
         image = cv2.putText(image, label_str, (b_coords[0], b_coords[1]), 0, 0.5, (0,255,0), 1, cv2.LINE_AA)
     
     save_samples(image)
@@ -100,17 +99,22 @@ def save_samples(image):
     print("Saving samples to", out)
 
     # can change to save multiple here if wanted
-    scipy.misc.imsave(os.path.join(out, "22360.png"), image)
+    scipy.misc.imsave(os.path.join(out, "208038.png"), image)
 
 
 
-def nms(confidences, locations, top_k_probabilities):
+def nms(locations, confidences, top_k_probabilities):
     """
         confidences,  array of class confidences for a prediction
         locations, array of locations (x, y offsets)
         prob
 
     """
+
+    class_boxes = {}
+    class_boxes[1] = []
+    class_boxes[2] = []
+
     i = 0
 
     for f in FEATURE_MAP_SIZES:
@@ -119,27 +123,30 @@ def nms(confidences, locations, top_k_probabilities):
             for col in range(w):
                 for d in DEFAULT_BOXES:
                     
-                    print(top_k_probabilities[i])
+                    #print("top_k_probabilities[i]", top_k_probabilities[i])
+                    #print("confidences[i]", confidences[i])
 
-                    if confidences[i] > 0 and top_k_probabilities[i] > CONFIDENCE_THRESHOLD:
+                    if confidences[i] != 0 and top_k_probabilities[i] > CONFIDENCE_THRESHOLD:
 
                         x_c, y_c = col + .5, row +.5
-                        center = np.array(x_c, y_c, x_c, y_c)
-                        abs_coords = center + confidences[i : i +4]
+                        center = np.array([x_c, y_c, x_c, y_c])
+                        abs_coords = center + locations[i*4 : i*4 +4]
+                        #print(abs_coords)
 
-                        w_scale = IMAGE_WIDTH * w
-                        h_scale = IMAGE_HEIGHT * h
-                        scale = np.array(w_scale, h_scale, w_scale, h_scale)
+                        w_scale = IMAGE_WIDTH / w
+                        h_scale = IMAGE_HEIGHT / h
+                        scale = np.array([w_scale, h_scale, w_scale, h_scale])
                         box_coordinates = abs_coords * scale
                         box_coordinates_array = [int(round(x)) for x in box_coordinates]
+                        #print(box_coordinates_array)
 
                         # Compare
+                        c = confidences[i] 
 
-                        c = confidences[i]  # Class
                         class_probability = top_k_probabilities[i]
-                        box = (*box_coordinates_array, classes, class_probability)
+                        box = (*box_coordinates_array, c, class_probability)
 
-                        if (len(class_boxes) == 0):  # Init case
+                        if (len(class_boxes[c]) == 0):  # Init case
                             class_boxes[c].append(box)
                         else:
                             suppresed = False
@@ -147,6 +154,8 @@ def nms(confidences, locations, top_k_probabilities):
 
                             for j in class_boxes[c]:
 
+                                #print(box[ : 4], j[:4])
+                                
                                 iou = calc_iou(box[ : 4], j[:4])
 
                                 if iou > TEST_IOU_THRESHOLD:
@@ -160,7 +169,7 @@ def nms(confidences, locations, top_k_probabilities):
                                 class_boxes[c].append(box)
                     i += 1
     boxes = []
-    for c in class_boxes:
+    for c in [1, 2]:
         for c_box in class_boxes[c]:
             boxes.append(c_box)
     boxes = np.array(boxes)
