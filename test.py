@@ -43,7 +43,7 @@ def run_image(sess, input_images, locations_all, probability_confidences, probab
     """
     
     # Refactor to test multiple images
-    image_file_path = "22360.png"
+    image_file_path = "left0141.jpg"
     image = scipy.misc.imread(image_file_path)
     if image is None:
         raise IOError("Could not open", image_file_path)
@@ -99,7 +99,7 @@ def save_samples(image):
     print("Saving samples to", out)
 
     # can change to save multiple here if wanted
-    scipy.misc.imsave(os.path.join(out, "208038.png"), image)
+    scipy.misc.imsave(os.path.join(out, "out.png"), image)
 
 
 

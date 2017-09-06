@@ -30,11 +30,11 @@ def confidences_and_locations(net, layer_id, Confidences, Locations):
         return Confidences, Locations
 
 
-def ssd_layers(conv4_3, conv5_pool):
+def ssd_layers(conv4_3, conv4_3_relu):
 
     Confidences, Locations = [], []
 
-    Confidences, Locations = confidences_and_locations(conv5_pool, 'ssd_0_vgg_', Confidences, Locations)
+    Confidences, Locations = confidences_and_locations(conv4_3_relu, 'ssd_0_vgg_', Confidences, Locations)
 
     with tf.variable_scope("ssd_300"):
         with slim.arg_scope([slim.conv2d], normalizer_fn=slim.batch_norm, 
