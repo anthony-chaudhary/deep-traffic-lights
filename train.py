@@ -50,16 +50,18 @@ def run():
 
                 train_writer.add_summary(summary, index)
 
-                #if index % 5 == 0:
-                print("\n\nEpoch", i, "index", index)
+                if index % 50 == 0:
+                    print("Saved")
+                
+                    print("\n\nEpoch", i, "index", index)
                 print("Loss \t {:.5f}...\n\n".format(loss_out))
 
                 index += 1
             
             # probably want a better way to do that...
             # and maybe change tensorboard thing to big drive
-            saver.save(sess, "checkpoints/c.ckpt")
-            print("Saved")
+            # saver.save(sess, "checkpoints/c.ckpt")
+            # print("Saved")
         # TODO timing / performance
         # TODO add to change to time
         # saver.save(sess, "checkpoints/b.ckpt")
