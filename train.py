@@ -20,8 +20,8 @@ def run():
 
     with tf.Session() as sess:   
         
-        input_images, conv4_3, conv5_3, keep_prob = load_vgg(sess, VGG_PATH)
-        confidences_all, locations_all = ssd_layers(conv4_3, conv5_3)
+        input_images, conv4_3_pool, conv4_3_relu, keep_prob = load_vgg(sess, VGG_PATH)
+        confidences_all, locations_all = ssd_layers(conv4_3_pool, conv4_3_relu)
         loss_result, true_predictions, true_locations, \
             prediction_loss_mask, top_k_probabilities = loss_function(confidences_all, locations_all)
         

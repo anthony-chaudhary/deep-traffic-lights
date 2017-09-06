@@ -6,11 +6,11 @@ def load_vgg(sess, vgg_path):
 
     tf.saved_model.loader.load(sess, ['vgg16'], vgg_path)
     images = tf.get_default_graph().get_tensor_by_name('image_input:0')
-    conv4_3 = tf.get_default_graph().get_tensor_by_name('pool4:0')
+    conv4_3_pool = tf.get_default_graph().get_tensor_by_name('pool4:0')
     conv4_3_relu = tf.get_default_graph().get_tensor_by_name('conv4_3/Relu:0')   
     keep_prob = tf.get_default_graph().get_tensor_by_name('keep_prob:0')
 
-    return images, conv4_3, conv4_3_relu, keep_prob
+    return images, conv4_3_pool, conv4_3_relu, keep_prob
 
 
 def confidences_and_locations(net, layer_id, Confidences, Locations):
@@ -38,7 +38,7 @@ def ssd_layers(conv4_3, conv5_pool):
 
     with tf.variable_scope("ssd_300"):
         with slim.arg_scope([slim.conv2d], normalizer_fn=slim.batch_norm, 
-                            weights_regularizer=slim.l2_regularizer(1e-2), padding='SAME'):
+                            weights_regularizer=slim.l2_regularizer(1e-3), padding='SAME'):
 
 
             net = slim.conv2d(conv4_3, 1024, [3,3], scope='ssd_0')
